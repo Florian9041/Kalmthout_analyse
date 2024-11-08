@@ -31,6 +31,7 @@ opts_chunk$set(
 )
 
 library(readxl)
+library(dplyr)
 ```
 ```{r}
 data <- read_xlsx("../data/SWOKalmthoutseVennen_Ruwedata_Export_AquaChem.xlsx")
@@ -39,7 +40,14 @@ data$ResultFormattedNumeric <- as.numeric(data$ResultFormattedNumeric)
 ```
 
 ```{r}
-
+# onderzochte variabelen
+data$Component %>% unique()
+# Nutrienten: NO2, NO3, PO4, T.N, T.P, NH4, NPOC (non-particulate organic carbon)
+# Ionen: HCO3, Mg, Si, Ca, CO3, Na, Cl,...
+# Doorzicht: CHL.A, SD.VELD, Turbiditeit, ZS.105
+# Zuurstof: O2.VELD, SAT.VELD
+# Zoutgehalte: SO4, SAL.VELD, EC25.VELD, Na, Cl
+# pH.VELD, TEMP.VELD
 ```
 
 
