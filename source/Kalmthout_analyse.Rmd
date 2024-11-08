@@ -1,0 +1,45 @@
+---
+title: "Kalmthout_analyse"
+author: "Florian Van Hecke"
+date: "2024-11-08"
+output: html_document
+---
+
+```{r}
+# Enable inbo r-universe
+options(repos = c(
+    inbo = 'https://inbo.r-universe.dev',
+    CRAN = 'https://cloud.r-project.org'))
+
+# Install the package
+#install.packages('ggpubr')
+```
+
+```{r}
+library(knitr)
+opts_chunk$set(
+  echo = FALSE, 
+  eval = TRUE,  
+  cache = FALSE, 
+  autodep = TRUE,
+  dpi = 300,
+  fig.width = 150 / 25.4,
+  fig.height = 100 / 25.4,
+  warning = TRUE,
+  error = TRUE,
+  message = TRUE
+)
+
+library(readxl)
+```
+```{r}
+data <- read_xlsx("../data/SWOKalmthoutseVennen_Ruwedata_Export_AquaChem.xlsx")
+data$FieldSamplingDate <- as.Date(data$FieldSamplingDate, format = "%d/%m/%Y")
+data$ResultFormattedNumeric <- as.numeric(data$ResultFormattedNumeric)
+```
+
+```{r}
+
+```
+
+
