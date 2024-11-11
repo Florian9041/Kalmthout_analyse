@@ -48,6 +48,10 @@ data$Component %>% unique()
 # Zuurstof: O2.VELD, SAT.VELD
 # Zoutgehalte: SO4, SAL.VELD, EC25.VELD, Na, Cl
 # pH.VELD, TEMP.VELD
+
+unique(data$FieldSampleID)
+length(unique(data$FieldSampleID))
+# 35 locaties
 ```
 
 # functies
