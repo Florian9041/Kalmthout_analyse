@@ -94,8 +94,47 @@ maak_plot_1var <- function(dataset, component, title = NULL, xas = "Datum staaln
 }
 ```
 
+# Abiotische bereiken 3160
+```{r}
+# Nutrienten en vervuiling
+NH4_jaargem <- 0.03 # BVR
+NH4_max <- 0.1 # BVR
+N.NO2_jaargem <- 0.2 # BVR
+N.NO2_max <- 0.6 # BVR
+BOD_90p <- 6 # BVR
+COD_90p <- 30 # BVR
+T.P <- 0.04 # mg P/L - T'jollyn et al. 2009, totaalfosfor: naar Denys et al. (2005), Heinis & Evers (2007); omzetting KRWen N2000-typen: Bal et al. (2001), Fellinger et al. (2004)
+T.N <- 0.59 # mg N/L - T'jollyn et al. 2009, totaalstikstof: Heinis &Evers (2007)
+  
+# Zoutgehalte
+EGV_90p <- 100 # BVR
+Cl_90p <- 20 # BVR
+SO4_gem <- 15
+
+# Zuurstofhuishouding
+O2_conc_10p <- 6 # BVR
+O2_verz_max <- 120 # BVR
+
+# Zuurtegraad
+pH_max <- 5.5 # Synbiosys/Runhaar (2008/2009); Van Calster et al., 2020
+pH_min <- 4.5 # BVR 2010
+```
+
+# percentage plassen dat voldoet aan MKN
+## Totale fosfor (TP)
+```{r}
+# vb. voor T.P (maximum)
+T.P_max <- data %>%
+  filter(Component %in% "T.P") %>%
+  group_by(FieldSampleID) %>%
+  summarise(maximum = max(ResultFormattedNumeric))
+T.P_max %>%
+  filter(maximum < 0.04 | maximum == 0.04) %>%
+  nrow()
+# 14 waterplassen voldoen aan norm voor T.P
+```
+
 
 ```{r}
 
 ```
-
