@@ -1,8 +1,15 @@
 ---
 title: "Kalmthout_analyse"
 author: "Florian Van Hecke"
-date: "2024-11-08"
-output: html_document
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: TRUE
+    toc_float:
+      collapsed: FALSE
+      smooth_scroll: FALSE
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r}
@@ -15,7 +22,7 @@ options(repos = c(
 #install.packages('ggpubr')
 ```
 
-```{r}
+```{r setup, results ='hide', eval = TRUE, echo = FALSE, message = FALSE, cache = FALSE, purl = FALSE, warning = FALSE}
 library(knitr)
 opts_chunk$set(
   echo = FALSE, 
@@ -32,9 +39,12 @@ opts_chunk$set(
 
 library(readxl)
 library(dplyr)
+library(ggplot2)
+library(stringr)
 ```
+
 ```{r}
-data <- read_xlsx("../data/SWOKalmthoutseVennen_Ruwedata_Export_AquaChem.xlsx")
+data <- read_xlsx("./data/SWOKalmthoutseVennen_Ruwedata_Export_AquaChem.xlsx")
 data$FieldSamplingDate <- as.Date(data$FieldSamplingDate, format = "%d/%m/%Y")
 data$ResultFormattedNumeric <- as.numeric(data$ResultFormattedNumeric)
 ```
@@ -50,8 +60,8 @@ data$Component %>% unique()
 # pH.VELD, TEMP.VELD
 
 unique(data$FieldSampleID)
-length(unique(data$FieldSampleID))
-# 35 locaties
+length(unique(data$CODE))
+# 27 locaties
 ```
 
 # functies
@@ -59,8 +69,8 @@ length(unique(data$FieldSampleID))
 # genereer plot en sla op
 save_plot <- function(dataset, component, naam, title = NULL, xas = NULL, yas = NULL, naam_linetype = NULL, labels_linetype = NULL){
   figuur <- dataset %>%
-    filter(AquaComponent %in% component) %>%  
-    ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = label, linetype = FieldSampleID)) +
+    filter(Component %in% component) %>%  
+    ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = Label, linetype = CODE)) +
     scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") + # visualiseert data per maand in format maand-jaar
     geom_line(size = 1) +
     geom_point() +
@@ -74,8 +84,8 @@ save_plot <- function(dataset, component, naam, title = NULL, xas = NULL, yas = 
 # puur om plot te genereren
 maak_plot <- function(dataset, component, title = NULL, xas = NULL, yas = NULL, naam_linetype = NULL, labels_linetype = NULL){
   figuur <- dataset %>%
-    filter(AquaComponent %in% component) %>%  
-    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = label, linetype = FieldSampleID)) +
+    filter(Component %in% component) %>%  
+    ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = Label, linetype = CODE)) +
     scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") + # visualiseert data per maand in format maand-jaar
     geom_line(size = 1) +
     geom_point() +
@@ -87,22 +97,21 @@ maak_plot <- function(dataset, component, title = NULL, xas = NULL, yas = NULL, 
 # plots genereren voor 1 variabele (trendlijn randzone + trendlijn zonnepanelen)
 maak_plot_1var <- function(dataset, component, title = NULL, xas = "Datum staalname", yas = NULL){
   figuur <- dataset %>%
-    filter(AquaComponent %in% component) %>%  
-    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = FieldSampleID)) +
+    filter(Component %in% component) %>%  
+    ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = CODE)) +
     scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") + # visualiseert data per maand in format maand-jaar
     geom_line(size = 1) +
     geom_point() +
-    labs(title = title) + xlab(xas) + ylab(yas) +
-  scale_color_discrete(name = "Locatie", labels = c("Randzone", "Zonnepanelen"))
+    labs(title = title) + xlab(xas) + ylab(yas)
   figuur
 }
 ```
 
-# Abiotische bereiken 3160
+# Abiotische bereiken 3160 (watertype Zm/Zs)
 ```{r}
-# Nutrienten en vervuiling
-NH4_jaargem <- 0.03 # BVR
-NH4_max <- 0.1 # BVR
+# Nutrienten en vervuiling watertype Zm/Zs
+NH3_jaargem <- 0.03 # BVR
+NH3_max <- 0.1 # BVR
 N.NO2_jaargem <- 0.2 # BVR
 N.NO2_max <- 0.6 # BVR
 BOD_90p <- 6 # BVR
@@ -140,5 +149,73 @@ T.P_max %>%
 
 
 ```{r}
+# plot TP
+maak_plot_1var(data %>% filter(FieldSampleID %in% c("AN_KAL_002", "AN_KAL_003")), "T.P", "Totale fosfor", yas = "Meetwaarde (mg P/L)")
+
+# plot TN
+maak_plot_1var(data %>% filter(FieldSampleID %in% c("AN_KAL_002", "AN_KAL_003")), "T.N", "Totale stikstof", yas = "Meetwaarde (mg N/L)")
+
+# plot anorganische stikstof
+maak_plot(data %>% filter(FieldSampleID %in% "AN_KAL_002"), c("NO3", "NO2", "NH4"), "Anorganische stikstof", yas = "Meetwaarde (mg/L)")
+
+anorg_N <- data %>%
+  filter(Component %in% c("NH4", "NO3", "NO2") & FieldSampleID == "AN_KAL_002")
+
+anorg_N$Label <- factor(anorg_N$Label, unique(anorg_N[order(anorg_N$ResultFormattedNumeric, decreasing = T), "Label"]))
+
+## fill_area
+plot1 <- anorg_N %>%
+  ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, fill = Label)) +
+  geom_area(position = "identity", alpha = 0.6) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
+  labs(title = "Randzone") +
+  xlab("Datum staalname") + 
+  ylab("Meetwaarde (mg N/L)")
+plot1
 
 ```
+
+# boxplots gemiddelde waarde per plas
+```{r}
+bwplot_TP <- data %>%
+  filter(Component %in% "T.P") %>%
+  ggplot(aes(x = FieldSampleID, y = ResultFormattedNumeric)) +
+  geom_boxplot() +
+    labs(title = "Totale stikstof per plas") + xlab("Locatie") + ylab("Meetwaarde (mg P/L)")
+  
+bwplot_TP
+```
+
+
+# loop voor elke locatie
+```{r}
+locaties <- unique(data$CODE)
+
+# voor totale fosfor per locatie figuur maken
+for (ID in locaties) {
+  data_figuur <- data %>%
+    filter(CODE %in% ID & Component %in% "T.P")
+  figuur <- ggplot(data_figuur,
+                   aes(x = FieldSamplingDate, y = ResultFormattedNumeric)) +
+    geom_line(size = 1) +
+    labs(title = paste("Locatie",ID)) + xlab("Datum staalname") + ylab("Meetwaarde (mg P/L)")
+  print(figuur)
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
