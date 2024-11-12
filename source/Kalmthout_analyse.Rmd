@@ -1,3 +1,4 @@
+
 ---
 title: "Kalmthout_analyse"
 author: "Florian Van Hecke"
@@ -47,6 +48,9 @@ library(stringr)
 data <- read_xlsx("./data/SWOKalmthoutseVennen_Ruwedata_Export_AquaChem.xlsx")
 data$FieldSamplingDate <- as.Date(data$FieldSamplingDate, format = "%d/%m/%Y")
 data$ResultFormattedNumeric <- as.numeric(data$ResultFormattedNumeric)
+# verwijder data van voor 2023
+data <- data %>%
+  filter(FieldSamplingDate >= "2023-01-01")
 ```
 
 ```{r}
@@ -150,13 +154,22 @@ T.P_max %>%
 
 ```{r}
 # plot TP
-maak_plot_1var(data %>% filter(FieldSampleID %in% c("AN_KAL_002", "AN_KAL_003")), "T.P", "Totale fosfor", yas = "Meetwaarde (mg P/L)")
+## AN_KAL_003
+maak_plot_1var(data %>% filter(CODE %in% "AN_KAL_003"), "T.P", "Totale fosfor", yas = "Meetwaarde (mg P/L)")
+maak_plot(data, "T.P", " Totale fosfor Kalmthout", yas = "Meetwaarde (mg P/L)")
+
+# TP voor alle locaties
+data %>%
+  filter(Component %in% "T.P") %>%
+  ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, colour = CODE)) +
+  geom_line(size = 1) +
+    scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y")
 
 # plot TN
-maak_plot_1var(data %>% filter(FieldSampleID %in% c("AN_KAL_002", "AN_KAL_003")), "T.N", "Totale stikstof", yas = "Meetwaarde (mg N/L)")
+maak_plot_1var(data %>% filter(CODE %in% c("AN_KAL_002", "AN_KAL_003")), "T.N", "Totale stikstof", yas = "Meetwaarde (mg N/L)")
 
 # plot anorganische stikstof
-maak_plot(data %>% filter(FieldSampleID %in% "AN_KAL_002"), c("NO3", "NO2", "NH4"), "Anorganische stikstof", yas = "Meetwaarde (mg/L)")
+maak_plot(data %>% filter(CODE %in% "AN_KAL_002"), c("NO3", "NO2", "NH4"), "Anorganische stikstof", yas = "Meetwaarde (mg/L)")
 
 anorg_N <- data %>%
   filter(Component %in% c("NH4", "NO3", "NO2") & FieldSampleID == "AN_KAL_002")
@@ -197,8 +210,9 @@ for (ID in locaties) {
     filter(CODE %in% ID & Component %in% "T.P")
   figuur <- ggplot(data_figuur,
                    aes(x = FieldSamplingDate, y = ResultFormattedNumeric)) +
-    geom_line(size = 1) +
-    labs(title = paste("Locatie",ID)) + xlab("Datum staalname") + ylab("Meetwaarde (mg P/L)")
+    geom_line(size = 1, colour = "orange") +
+    labs(title = paste("Locatie",ID, "+ (MKN zomerhalfjaargemiddelde)")) + xlab("Datum staalname") + ylab("Meetwaarde (mg P/L)") +
+    geom_hline(yintercept = 0.03)
   print(figuur)
 }
 ```
