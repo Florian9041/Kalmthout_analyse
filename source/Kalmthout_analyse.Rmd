@@ -121,8 +121,9 @@ N.NO2_max <- 0.6 # BVR
 BOD_90p <- 6 # BVR
 COD_90p <- 30 # BVR
 T.P <- 0.04 # mg P/L - T'jollyn et al. 2009, totaalfosfor: naar Denys et al. (2005), Heinis & Evers (2007); omzetting KRWen N2000-typen: Bal et al. (2001), Fellinger et al. (2004)
+T.P_zomerhalfjaargem <- 0.03 # mg P/L BVR
 T.N <- 0.59 # mg N/L - T'jollyn et al. 2009, totaalstikstof: Heinis &Evers (2007)
-  
+T.N_zomerhalfjaargem <- 1.3 # mg N/L BVR 2010
 # Zoutgehalte
 EGV_90p <- 100 # BVR
 Cl_90p <- 20 # BVR
@@ -143,13 +144,13 @@ pH_min <- 4.5 # BVR 2010
 ```{r}
 # vb. voor T.P (maximum)
 T.P_max <- data %>%
-  filter(Component %in% "T.P") %>%
+  filter(Component %in% "T.P" & months(FieldSamplingDate, FALSE) %in% month.name[c(4:9)], ) %>% # filter zomerhalfjaar (april t.e.m. september)
   group_by(FieldSampleID) %>%
   summarise(maximum = max(ResultFormattedNumeric))
 T.P_max %>%
-  filter(maximum < 0.04 | maximum == 0.04) %>%
+  filter(maximum <= 0.03) %>%
   nrow()
-# 14 waterplassen voldoen aan norm voor T.P
+# 8 waterplassen voldoen aan norm voor T.P
 ```
 
 
@@ -195,6 +196,8 @@ bwplot_TP
 
 
 # loop voor elke locatie
+
+## Totale fosfor
 ```{r}
 locaties <- unique(data$CODE)
 
@@ -212,7 +215,7 @@ for (ID in locaties) {
 
 # gebruik functie maak_plot_1var
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "T.P" , paste("Totale fosfor", ID), yas = "Meetwaarde (mg P/L)") + geom_hline(yintercept = 0.03, color = "black", linetype = "dashed", size = 1) +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "T.P" , paste("Totale fosfor T.P", ID), yas = "Meetwaarde (mg P/L)") + geom_hline(yintercept = 0.03, color = "black", linetype = "dashed", size = 1) +
   scale_y_continuous(breaks = pretty_breaks(n = 10))
   print(figuur)
   ggsave(plot = figuur,
@@ -222,7 +225,16 @@ for (ID in locaties) {
 ```
 
 
-
+## Totale stikstof
+```{r}
+for (ID in locaties) {
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "T.N" , paste("Totale stikstof T.N", ID), yas = "Meetwaarde (mg N/L)") + geom_hline(yintercept = 0.03, color = "black", linetype = "dashed", size = 1) +
+  scale_y_continuous(breaks = pretty_breaks(n = 10))
+  print(figuur)
+  ggsave(plot = figuur,
+         filename = paste0("./exports/TP/", ID,"_TP", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
+}
+```
 
 
 
