@@ -379,7 +379,24 @@ data %>%
 
 ## For loop veldcondities per variabele
 ```{r}
-
+locatiecodes <- unique(data$CODE)
+for (locatie in locatiecodes) {
+  figuur <- data %>% 
+    filter(CODE %in% locatie & Component %in% c("T.N", "T.P", "CHL.A", "SD.VELD", "ZS.105", "O2.VELD", "SAT.VELD", "EC25.VELD", "pH.VELD", "TEMP.VELD")) %>%
+    ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = Label)) +
+    geom_line(linewidth = 1) +
+    geom_point() +
+    scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
+    labs(title = paste("Veldmetingen",locatie)) +
+    xlab("Datum staalname") +
+    ylab("Meetwaarde (log10)") +
+    scale_color_discrete("Variabelen") +
+    scale_y_log10()
+  print(figuur)
+  ggsave(figuur, 
+         filename = paste0("./exports/veldmetingen/",locatie, "_veldmetingen",".jpg"), 
+         dpi = 200, width = 15, height = 10)
+}
 ```
 
 
@@ -576,3 +593,22 @@ datawide <- datawide %>% remove_rownames %>% column_to_rownames(var = "FieldSamp
 maucha(datawide)
 
 ```
+
+
+# IR-EGV diagram
+```{r}
+# gemiddelde Cl en Ca concentraties per locatie
+mean_Cl <- mean(data$ResultCalc[data$AquaComponent == "Cl"])
+mean_Ca <- mean(data$ResultCalc[data$AquaComponent == "Ca"])
+
+# ionenratio 
+ionrat <- ((mean_Ca*2)/40.078) / (((mean_Ca*2)/40.078) + (mean_Cl/35.453))
+ionrat
+
+# gemiddeld EGV
+mean_EGV <- mean(data$ResultCalc[data$AquaComponent == "EGV25_veld"])
+mean_EGV
+```
+
+
+
