@@ -43,6 +43,8 @@ library(ggplot2)
 library(stringr)
 library(scales)
 library(tidyr)
+library(tidyverse)
+
 ```
 
 ```{r}
@@ -352,12 +354,41 @@ for (ID in locaties) {
 
 
 
+# Veldcondities 
+```{r}
+# Nutrienten: NO2, NO3, PO4, T.N, T.P, NH4, NPOC (non-particulate organic carbon)
+# Ionen: HCO3, Mg, Si, Ca, CO3, Na, Cl,...
+# Doorzicht: CHL.A, SD.VELD, ZS.105
+# Zuurstof: O2.VELD, SAT.VELD
+# Zoutgehalte: SO4, SAL.VELD, EC25.VELD, Na, Cl
+# pH.VELD, TEMP.VELD
+
+data %>% 
+  filter(CODE %in% "AN_KAL_002" & Component %in% c("T.N", "T.P", "CHL.A", "SD.VELD", "ZS.105", "O2.VELD", "SAT.VELD", "EC25.VELD", "pH.VELD", "TEMP.VELD")) %>%
+  ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = Label)) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
+  labs(title = "Variabelen AN_KAL_002") +
+  xlab("Datum staalname") +
+  ylab("Meetwaarde (log10)") +
+  scale_color_discrete("Variabelen") +
+  scale_y_log10()
+
+```
+
+## For loop veldcondities per variabele
+```{r}
+
+```
+
+
+
 # Maucha-diagram
 
-## Functie Maucha-diagram (mymaucha)
+## originele code Maucha (per plas figuur opslaan)
 ```{r}
-library(utils)
-mymaucha <- function(x, col = NULL,
+maucha <- function(x, col = NULL,
                    labels = TRUE, labels.col = 1,
                    polygon = FALSE, polygon.col = 1,
                    main = NULL, ...){
@@ -376,7 +407,7 @@ mymaucha <- function(x, col = NULL,
     x.all <- as.matrix(x)
     n.plot <- nrow(x.all)
     if(is.null(main)){
-      main <- x[,1]
+      main <- row.names(x.all)
     }
   }
   
@@ -426,8 +457,7 @@ mymaucha <- function(x, col = NULL,
     }
     
     if(labels){
-      lab <- c("K", "Na", "Ca", "Mg", 
-               "SO4", "Cl", "HCO3", "CO3")
+      lab <- c("K", "Na", "Cl", "Mg", "SO4", "Cl", "HCO3", "CO3")
       lab.pos.x <- coord.x[3, ]
       lab.pos.y <- coord.y[3, ]
       lab.pos.x[a < R] <- coord.poly.x[3, a < R]
@@ -455,9 +485,8 @@ mymaucha <- function(x, col = NULL,
   }
   par(mar = par.mar.0, mfrow = par.mfrow.0)
 }
-```
-## Subfunctie .dimMosaic
-```{r}
+
+# Compute a grid for graphical arrangement
 .dimMosaic <- function(n.plot){
   x <- floor(sqrt(n.plot))
   y <- floor(sqrt(n.plot))
@@ -467,7 +496,7 @@ mymaucha <- function(x, col = NULL,
 }
 ```
 
-## Maak dataset met ionen
+### Maak dataset met ionen
 ```{r}
 # dataset met ionen (gemiddelde waarde per locatie)
 ionen <- data %>%
@@ -477,278 +506,73 @@ ionen <- data %>%
 
 # to wide format
 ionenwide <- pivot_wider(ionen, names_from = Component, values_from = gemiddelde)
-
-data("ionwaters")
-
-mymaucha(ionenwide[2:9], main = "Ionensamenstelling Kalmthoutse vennen \n Juli 2023-Juni 2024")
-
-# first location
-figuur1 <- mymaucha(ionenwide[1,2:9], main = "Ionensamenstelling ANTKAL0001")
 ```
 
-# loop of maucha per location
-```{r}
-# for 27 rows (27 locations) in ionenwide-dataset
-locaties <- unique(data$CODE)
-for (i in length(locaties)) {
-  locatiecode <- locaties[i]
-  figuur <- mymaucha(ionenwide[i,2:9], main = paste0())
-  print(figuur)
-  
-}
-```
 
-```{r}
-mymaucha <- function(x, col = NULL,
-                     labels = TRUE, labels.col = 1,
-                     polygon = FALSE, polygon.col = 1,
-                     polygon.alpha = 1,
-                     polygon.border = "green3", polygon.cross = 1,
-                     main = NULL, ...){
-
-  #  x <- maucha4010_2
-  # col = "white"
-  # labels = TRUE
-  # labels.col = 1
-  # polygon = FALSE
-  # polygon.col = "grey50"
-  # polygon.border = "green3"
-  # polygon.alpha = 0.1
-  # polygon.cross = "black"
-  #  main = NULL
-
-  if (is.null(col)) {
-    col <- c("#54c7fd", "#ffcd00", "#ff9600", "#ff2851",
-             "#0076fe", "#41cd58", "#ff3823", "#8f8e94")
-  }
-  col <- rep_len(col, length.out = 8)
-  polygon.col <- rep_len(polygon.col, length.out = 8)
-  polygon.border <- rep_len(polygon.border, length.out = 8)
-  polygon.cross <- rep_len(polygon.cross, length.out = 8)
-  polygon.alpha <- rep_len(polygon.alpha, length.out = 8)
-
-  if (is.vector(x)) {
-    n.plot <- 1
-    x.all <- t(as.matrix(x))
-  } else {
-    x.all <- as.matrix(x)
-    n.plot <- nrow(x.all)
-    if (is.null(main)) {
-      main <- row.names(x.all)
-    }
-  }
-
-  # for(j in 1:n.plot){ # probleem bij aanmaak list met for loop => eerder apply gebruiken
-  fn_mke_maucha <- function(x_maucha) {
-
-    #    x <- x.all[1, ]
-    # x_maucha <- x.all[1, ]
-
-    myrowname <- x_maucha[10] # label in aparte matrix
-    x <- as.numeric(x_maucha[1:9]) # matrix was omgezet naar karakter omwille van label
-
-    x[1] <- (x[1] * 1) / 39.0983
-    x[2] <- (x[2] * 1) / 22.9898
-    x[3] <- (x[3] * 2) / 40.0780
-    x[4] <- (x[4] * 2) / 24.3050
-    x[5] <- (x[5] * 2) / 96.0626
-    x[6] <- (x[6] * 1) / 35.4530
-    x[7] <- (x[7] * 1) / 61.0168
-    x[8] <- (x[8] * 2) / 60.0089
-
-    x[1:4] <- x[1:4] / sum(x[1:4]) * 100
-    x[5:8] <- x[5:8] / sum(x[5:8]) * 100
-
-    A  <- sum(x[1:8])
-    R <- sqrt(((A / 16) * 2 / sin(22.5 * pi / 180)))
-    a <- x[1:8] / (R * sin(22.5 * pi / 180))
-
-    coord.x <- matrix(NA, nrow = 5, ncol = 8)
-    coord.y <- matrix(NA, nrow = 5, ncol = 8)
-    coord.x[1, ] <- coord.x[5, ] <- rep(0, 8)
-    coord.y[1, ] <- coord.y[5, ] <- rep(0, 8)
-    coord.x[2, ] <- cos(seq(90, -225, -45) * pi / 180) * R
-    coord.y[2, ] <- sin(seq(90, -225, -45) * pi / 180) * R
-    coord.x[3, ] <- cos(seq(67.5, -247.5, -45) * pi / 180) * a
-    coord.y[3, ] <- sin(seq(67.5, -247.5, -45) * pi / 180) * a
-    coord.x[4, ] <- cos(seq(45, -270, -45) * pi / 180) * R
-    coord.y[4, ] <- sin(seq(45, -270, -45) * pi / 180) * R
-
-
-    if (polygon | labels) {
-      coord.poly.x <- coord.x
-      coord.poly.x[3, ] <- cos(seq(67.5, -247.5, -45) * pi / 180) * R
-      coord.poly.y <- coord.y
-      coord.poly.y[3, ] <- sin(seq(67.5, -247.5, -45) * pi / 180) * R
-    }
-
-    if (labels) {
-      lab <- c("K", "Na", "Ca", "Mg", "SO4",  "Cl", "HCO3", "CO3")
-      lab2 <- c("K", "Na", "Ca", "Mg", "SO4",  "Cl", "HCO3", "CO3") # toegevoegd want lab werkt niet
-      lab.pos.x <- coord.x[3, ]
-      lab.pos.y <- coord.y[3, ]
-      lab.pos.x[a < R] <- coord.poly.x[3, a < R]
-      lab.pos.y[a < R] <- coord.poly.y[3, a < R]
-      lab.pos.x <- lab.pos.x + cos(seq(67.5, -247.5, -45) * pi / 180) * 2
-      lab.pos.y <- lab.pos.y + sin(seq(67.5, -247.5, -45) * pi / 180) * 2
-    }
-
-    xlim <- max(abs(c(min(lab.pos.x), max(lab.pos.x))))
-    ylim <- max(abs(c(min(lab.pos.y), max(lab.pos.y))))
-    alllim <- max(xlim , ylim)
-
-    # draw empty ggplot
-    p <- ggplot() +
-      # coord_equal() +
-      labs(title = paste0(myrowname)) +
-      #scale_x_continuous(limits = c(-xlim, xlim)) +
-      # scale_y_continuous(limits = c(-ylim, ylim))+
-      scale_x_continuous(limits = c(-alllim, alllim)) +
-      scale_y_continuous(limits = c(-alllim, alllim)) +
-      theme_bw() +
-      theme(panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            panel.border = element_rect(color = "grey85"),
-            axis.ticks = element_blank(),
-            axis.text.x = element_blank(),
-            axis.text.y = element_blank(),
-            axis.title.x = element_blank(),
-            axis.title.y = element_blank(),
-            plot.title = element_text(hjust = 0.5),
-            plot.subtitle = element_text(hjust = 0.5))
-    #expand = expansion(mult = c(.05,.12))
-
-    # add hexadecagon to ggplot
-    if(polygon){
-      p <- p +
-        geom_line(aes(x = coord.poly.x[, 1], y = coord.poly.y[, 1]),
-                  color = polygon.col[1], linetype = "dashed") +
-        geom_line(aes(x = coord.poly.x[, 2], y = coord.poly.y[, 2]),
-                  color = polygon.col[2], linetype = "dashed") +
-        geom_line(aes(x = coord.poly.x[, 3], y = coord.poly.y[, 3]),
-                  color = polygon.col[3], linetype = "dashed") +
-        geom_line(aes(x = coord.poly.x[, 4], y = coord.poly.y[, 4]),
-                  color = polygon.col[4], linetype = "dashed") +
-        geom_line(aes(x = coord.poly.x[, 5], y = coord.poly.y[, 5]),
-                  color = polygon.col[5], linetype = "dashed") +
-        geom_line(aes(x = coord.poly.x[, 6], y = coord.poly.y[, 6]),
-                  color = polygon.col[6], linetype = "dashed") +
-        geom_line(aes(x = coord.poly.x[, 7], y = coord.poly.y[, 7]),
-                  color = polygon.col[7], linetype = "dashed") +
-        geom_line(aes(x = coord.poly.x[, 8], y = coord.poly.y[, 8]),
-                  color = polygon.col[8], linetype = "dashed")
-    }
-
-    # add polygons to ggplot
-    p <- p +
-      geom_polygon(aes(x = coord.x[, 1], y = coord.y[, 1]),
-                   fill = col[1], color = polygon.border[1],
-                   alpha = polygon.alpha[1]) +
-      geom_polygon(aes(x = coord.x[, 2], y = coord.y[, 2]),
-                   fill = col[2], color = polygon.border[2],
-                   alpha = polygon.alpha[2]) +
-      geom_polygon(aes(x = coord.x[, 3], y = coord.y[, 3]),
-                   fill = col[3], color = polygon.border[3],
-                   alpha = polygon.alpha[3]) +
-      geom_polygon(aes(x = coord.x[, 4], y = coord.y[, 4]),
-                   fill = col[4], color = polygon.border[4],
-                   alpha = polygon.alpha[4]) +
-      geom_polygon(aes(x = coord.x[, 5], y = coord.y[, 5]),
-                   fill = col[5], color = polygon.border[5],
-                   alpha = polygon.alpha[5]) +
-      geom_polygon(aes(x = coord.x[, 6], y = coord.y[, 6]),
-                   fill = col[6], color = polygon.border[6],
-                   alpha = polygon.alpha[6]) +
-      geom_polygon(aes(x = coord.x[, 7], y = coord.y[, 7]),
-                   fill = col[7], color = polygon.border[7],
-                   alpha = polygon.alpha[7]) +
-      geom_polygon(aes(x = coord.x[, 8], y = coord.y[, 8]),
-                   fill = col[8], color = polygon.border[8],
-                   alpha = polygon.alpha[8])
-
-    # add cross *8 to ggplot
-    p <- p +
-      geom_segment(aes(x = coord.x[1, 1], y = coord.y[1, 1],
-                       xend = coord.x[2, 1], yend = coord.y[2, 1]),
-                   color = polygon.cross[1]) +
-      geom_segment(aes(x = coord.x[1, 2], y = coord.y[1, 2],
-                       xend = coord.x[2, 2], yend = coord.y[2, 2]),
-                   color = polygon.cross[2]) +
-      geom_segment(aes(x = coord.x[1, 3], y = coord.y[1, 3],
-                       xend = coord.x[2, 3], yend = coord.y[2, 3]),
-                   color = polygon.cross[3]) +
-      geom_segment(aes(x = coord.x[1, 4], y = coord.y[1, 4],
-                       xend = coord.x[2, 4], yend = coord.y[2, 4]),
-                   color = polygon.cross[4]) +
-      geom_segment(aes(x = coord.x[1, 5], y = coord.y[1, 5],
-                       xend = coord.x[2, 5], yend = coord.y[2, 5]),
-                   color = polygon.cross[5]) +
-      geom_segment(aes(x = coord.x[1, 6], y = coord.y[1, 6],
-                       xend = coord.x[2, 6], yend = coord.y[2, 6]),
-                   color =polygon.cross[6]) +
-      geom_segment(aes(x = coord.x[1, 7], y = coord.y[1, 7],
-                       xend = coord.x[2, 7], yend = coord.y[2, 7]),
-                   color = polygon.cross[7]) +
-      geom_segment(aes(x = coord.x[1, 8], y = coord.y[1, 8],
-                       xend = coord.x[2, 8], yend = coord.y[2, 8]),
-                   color = polygon.cross[8])
-
-    # add labels to ggplot
-    if (labels) {
-      p <- p + geom_text(aes(x = lab.pos.x, y = lab.pos.y, label = lab2),
-                         color = labels.col)
-    }
-
-    # export plot
-    ggsave(p, file = paste0("./exports/Maucha/", gsub("[[:blank:]]", "_", myrowname) ,".png"), width = 5, height = 5)
-
-    return(p)
-  }
-
-  lst_plots <- apply(x.all, MARGIN = 1, fn_mke_maucha)
-  # x.all is een matrix => apply ipv lapply (MARGIN = 1 (for row))
-
-  return(lst_plots)
-}
-```
-
+## Maucha-diagram voor alle locaties (gemiddelde per locatie)
 ```{r}
 # converteer kolom met locatiecode naar row.names voor maucha-functie
-library(tidyverse)
 ionenwide <- ionenwide %>% remove_rownames %>% column_to_rownames(var = "CODE")
-
-# plot maucha-diagram
-plot1 <- mymaucha(ionenwide[1, 2:9])
-plot2 <- mymaucha(ionenwide[2, 2:9])
-library(ggpubr)
+maucha(ionenwide)
 ```
 
-
-# Veldcondities 
+## Maucha-diagram per locatie
+### Maak dataset aan voor locatie x
 ```{r}
-# Nutrienten: NO2, NO3, PO4, T.N, T.P, NH4, NPOC (non-particulate organic carbon)
-# Ionen: HCO3, Mg, Si, Ca, CO3, Na, Cl,...
-# Doorzicht: CHL.A, SD.VELD, ZS.105
-# Zuurstof: O2.VELD, SAT.VELD
-# Zoutgehalte: SO4, SAL.VELD, EC25.VELD, Na, Cl
-# pH.VELD, TEMP.VELD
+KAL0001 <- data %>%
+  filter(Component %in% c("K", "Na", "Ca", "Mg", "SO4", "Cl", "HCO3", "CO3") & CODE == "ANTKAL0001") %>%
+  group_by(Component, FieldSamplingDate) %>%
+  summarise(gemiddelde = mean(ResultFormattedNumeric)) %>%
+  select(FieldSamplingDate, Component, gemiddelde)
 
-data %>% 
-  filter(CODE %in% "AN_KAL_002" & Component %in% c("T.N", "T.P", "CHL.A", "SD.VELD", "ZS.105", "O2.VELD", "SAT.VELD", "EC25.VELD", "pH.VELD", "TEMP.VELD")) %>%
-  ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = Label)) +
-  geom_line(linewidth = 1) +
-  geom_point() +
-  scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
-  labs(title = "Variabelen AN_KAL_002") +
-  xlab("Datum staalname") +
-  ylab("Meetwaarde (log10)") +
-  scale_color_discrete("Variabelen") +
-  scale_y_log10()
+# to wide format
+KAL0001wide <- pivot_wider(KAL0001, names_from = Component, values_from = gemiddelde)
+
+# converteer kolom met datum staalname naar row.names voor maucha-functie
+KAL0001wide <- KAL0001wide %>% remove_rownames %>% column_to_rownames(var = "FieldSamplingDate")
+maucha(KAL0001wide)
 
 ```
 
-# For loop veldcondities per variabele
+### loop met maucha per locatie
 ```{r}
-
+locaties <- unique(data$CODE)
+for (locatie in locaties) {
+  # dataset voor locatie
+  data_ID <- data %>%
+  filter(Component %in% c("K", "Na", "Ca", "Mg", "SO4", "Cl", "HCO3", "CO3") & CODE == locatie) %>%
+  group_by(Component, FieldSamplingDate) %>%
+  summarise(gemiddelde = mean(ResultFormattedNumeric)) %>%
+  select(FieldSamplingDate, Component, gemiddelde)
+  
+  # data naar wide-format
+  data_wide <- pivot_wider(data_ID, names_from = Component, values_from = gemiddelde)
+  
+  # converteer kolom met datum staalname naar row.names voor maucha-functie
+  data_wide <- data_wide %>% remove_rownames %>% column_to_rownames(var = "FieldSamplingDate")
+  maucha(data_wide)
+  print(locatie)
+}
 ```
 
+```{r}
+#"ANTKAL0021"  "ANTKAL0001"  "ANTKAL0385"  "ANTKAL0344"  "AN_KAL_006"  "ANTKAL0482"  "ANTKAL0483" 
+#"AN_KAL_002"  "ANTKAL0306"  "ANTKAL0123"  "AN_KAL_003"  "ANTKAL0011"  "ANTKAL0284"  "AN_KAL_007" 
+#"AN_NOL_003"  "AN_NOL_001"  "ANTKAL0309"  "ANTKAL0289"  "ANTKAL0356"  "ANTKAL0217"  "ANTKAL0350" 
+#"ANTKAL0384"  "ANTKAL0492"  "ANTKAL0276"  "ANTKAL0478"  "ANTKAL0386a" "ANTKAL0386b"
+locatie <- "ANTKAL0021"
+
+data_locatie <- data %>%
+  filter(Component %in% c("K", "Na", "Ca", "Mg", "SO4", "Cl", "HCO3", "CO3") & CODE == locatie) %>%
+  group_by(Component, FieldSamplingDate) %>%
+  summarise(gemiddelde = mean(ResultFormattedNumeric)) %>%
+  select(FieldSamplingDate, Component, gemiddelde)
+
+# to wide format
+datawide <- pivot_wider(data_locatie, names_from = Component, values_from = gemiddelde)
+
+# converteer kolom met datum staalname naar row.names voor maucha-functie
+datawide <- datawide %>% remove_rownames %>% column_to_rownames(var = "FieldSamplingDate")
+maucha(datawide)
+
+```
