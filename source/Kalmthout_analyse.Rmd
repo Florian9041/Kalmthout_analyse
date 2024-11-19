@@ -523,8 +523,11 @@ ionen <- data %>%
 
 # to wide format
 ionenwide <- pivot_wider(ionen, names_from = Component, values_from = gemiddelde)
+ionenwide <- ionenwide %>% select(CODE, K, Na, Ca, Mg, SO4, Cl, HCO3, CO3)
 ```
 
+
+# Maucha-diagram
 
 ## Maucha-diagram voor alle locaties (gemiddelde per locatie)
 ```{r}
