@@ -48,9 +48,9 @@ library(tidyverse)
 ```
 
 ```{r}
-data <- read_xlsx("./data/SWOKalmthoutseVennen_Ruwedata_Export_AquaChem.xlsx")
+data <- read.csv2("./data/AC_Kalmthout_ruwe_data_lang_2024-11-19.csv")
 data$FieldSamplingDate <- as.Date(data$FieldSamplingDate, format = "%d/%m/%Y")
-data$ResultFormattedNumeric <- as.numeric(data$ResultFormattedNumeric)
+data$ResultCalc <- as.numeric(data$ResultCalc)
 # verwijder data van voor 2023
 data <- data %>%
   filter(FieldSamplingDate >= "2023-01-01")
@@ -78,7 +78,7 @@ length(unique(data$CODE))
 save_plot <- function(dataset, component, naam, title = NULL, xas = NULL, yas = NULL, naam_linetype = NULL, labels_linetype = NULL){
   figuur <- dataset %>%
     filter(Component %in% component) %>%  
-    ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = Label, linetype = CODE)) +
+    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = Label, linetype = CODE)) +
     scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") + # visualiseert data per maand in format maand-jaar
     geom_line(linewidth = 1) +
     geom_point() +
@@ -93,7 +93,7 @@ save_plot <- function(dataset, component, naam, title = NULL, xas = NULL, yas = 
 maak_plot <- function(dataset, component, title = NULL, xas = NULL, yas = NULL, naam_linetype = NULL, labels_linetype = NULL){
   figuur <- dataset %>%
     filter(Component %in% component) %>%  
-    ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = Label, linetype = CODE)) +
+    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = Label, linetype = CODE)) +
     scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") + # visualiseert data per maand in format maand-jaar
     geom_line(linewidth = 1) +
     geom_point() +
@@ -106,7 +106,7 @@ maak_plot <- function(dataset, component, title = NULL, xas = NULL, yas = NULL, 
 maak_plot_1var <- function(dataset, component, title = NULL, xas = "Datum staalname", yas = NULL){
   figuur <- dataset %>%
     filter(Component %in% component) %>%  
-    ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = CODE)) +
+    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = CODE)) +
     scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") + # visualiseert data per maand in format maand-jaar
     geom_line(linewidth = 1) +
     geom_point() +
@@ -150,7 +150,7 @@ pH_min <- 4.5 # BVR 2010
 T.P_max <- data %>%
   filter(Component %in% "T.P" & months(FieldSamplingDate, FALSE) %in% month.name[c(4:9)], ) %>% # filter zomerhalfjaar (april t.e.m. september)
   group_by(FieldSampleID) %>%
-  summarise(maximum = max(ResultFormattedNumeric))
+  summarise(maximum = max(ResultCalc))
 T.P_max %>%
   filter(maximum <= 0.03) %>%
   nrow()
@@ -173,11 +173,11 @@ maak_plot(data %>% filter(CODE %in% "AN_KAL_002"), c("NO3", "NO2", "NH4"), "Anor
 anorg_N <- data %>%
   filter(Component %in% c("NH4", "NO3", "NO2") & FieldSampleID == "AN_KAL_002")
 
-anorg_N$Label <- factor(anorg_N$Label, unique(anorg_N[order(anorg_N$ResultFormattedNumeric, decreasing = T), "Label"]))
+anorg_N$Label <- factor(anorg_N$Label, unique(anorg_N[order(anorg_N$ResultCalc, decreasing = T), "Label"]))
 
 ## fill_area
 plot1 <- anorg_N %>%
-  ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, fill = Label)) +
+  ggplot(aes(x = FieldSamplingDate, y = ResultCalc, fill = Label)) +
   geom_area(position = "identity", alpha = 0.6) +
   scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
   labs(title = "Randzone") +
@@ -191,7 +191,7 @@ plot1
 ```{r}
 bwplot_TP <- data %>%
   filter(Component %in% "T.P") %>%
-  ggplot(aes(x = FieldSampleID, y = ResultFormattedNumeric)) +
+  ggplot(aes(x = FieldSampleID, y = ResultCalc)) +
   geom_boxplot() +
     labs(title = "Totale stikstof per plas") + xlab("Locatie") + ylab("Meetwaarde (mg P/L)")
   
@@ -199,9 +199,10 @@ bwplot_TP
 ```
 
 
-# loop voor elke locatie
 
-## Totale fosfor
+## Nutriëntenlast
+
+### Totale fosfor
 ```{r}
 locaties <- unique(data$CODE)
 
@@ -210,9 +211,9 @@ for (ID in locaties) {
   data_figuur <- data %>%
     filter(CODE %in% ID & Component %in% "T.P")
   figuur <- ggplot(data_figuur,
-                   aes(x = FieldSamplingDate, y = ResultFormattedNumeric)) +
+                   aes(x = FieldSamplingDate, y = ResultCalc)) +
     geom_line(linewidth = 1, colour = "orange") +
-    labs(title = paste("Locatie",ID, "+ (MKN zomerhalfjaargemiddelde)")) + xlab("Datum staalname") + ylab("Meetwaarde (mg P/L)") +
+    labs(title = paste("Locatie",ID, " (+ MKN zomerhalfjaargemiddelde)")) + xlab("Datum staalname") + ylab("Meetwaarde (mg P/L)") +
     geom_hline(yintercept = 0.03)
   print(figuur)
 }
@@ -229,7 +230,7 @@ for (ID in locaties) {
 ```
 
 
-## Totale stikstof
+### Totale stikstof
 ```{r}
 locaties <- unique(data$CODE)
 
@@ -241,6 +242,53 @@ for (ID in locaties) {
   ggsave(plot = figuur,
          filename = paste0("./exports/TN/", ID,"_TN", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
+```
+
+### Anorganische stikstof
+```{r}
+# herordenen van variabelen van groot > klein
+anorg_N_KAL0384 <- data %>%
+  filter(AquaComponent %in% c("NH4_N", "NO3_N", "NO2_N") & FieldSampleID == "ANTKAL0384")
+
+anorg_N_KAL0384$label <- factor(anorg_N_KAL0384$label, unique(anorg_N_KAL0384[order(anorg_N_KAL0384$ResultCalc, decreasing = T), "label"]))
+
+plot1 <- anorg_N_KAL0384 %>%
+  ggplot(aes(x = FieldSamplingDate, y = ResultCalc, fill = label)) +
+  geom_area(position = "identity", alpha = 0.6) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
+  labs(title = "Anorganische stikstof (N_anorg = NH4_N + NO3_N + NO2_N)") +
+  xlab("Datum staalname") + 
+  ylab("Meetwaarde (mg N/L)")  + 
+  scale_fill_discrete("Variabelen") + scale_y_continuous(breaks = seq(0,2, by = 0.1))
+plot1
+
+```
+
+
+```{r}
+# loop
+locaties <- unique(data$CODE)
+for (ID in locaties) {
+  # subset voor locatie
+  N_anorg_ID <- data %>%
+  filter(AquaComponent %in% c("NH4_N", "NO3_N", "NO2_N") & CODE == ID)
+  
+  # orden van klein naar groot
+  N_anorg_ID$label <- factor(N_anorg_ID$label, unique(N_anorg_ID[order(N_anorg_ID$ResultCalc, decreasing = T), "label"]))
+  # plot figuur
+  figuur <- N_anorg_ID %>%
+    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, fill = label)) +
+    geom_area(position = "identity", alpha = 0.6) +
+    scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
+    labs(title = paste("Anorganische stikstof", ID ,"(N_anorg = NH4_N + NO3_N + NO2_N)")) +
+    xlab("Datum staalname") + 
+    ylab("Meetwaarde (mg N/L)")  + 
+    scale_fill_discrete("Variabelen") + scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
+  print(figuur)
+  ggsave(plot = figuur,
+         filename = paste0("./exports/N_anorg/", ID,"_N_anorg", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
+}
+
 ```
 
 
@@ -365,7 +413,7 @@ for (ID in locaties) {
 
 data %>% 
   filter(CODE %in% "AN_KAL_002" & Component %in% c("T.N", "T.P", "CHL.A", "SD.VELD", "ZS.105", "O2.VELD", "SAT.VELD", "EC25.VELD", "pH.VELD", "TEMP.VELD")) %>%
-  ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = Label)) +
+  ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = Label)) +
   geom_line(linewidth = 1) +
   geom_point() +
   scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
@@ -383,7 +431,7 @@ locatiecodes <- unique(data$CODE)
 for (locatie in locatiecodes) {
   figuur <- data %>% 
     filter(CODE %in% locatie & Component %in% c("T.N", "T.P", "CHL.A", "SD.VELD", "ZS.105", "O2.VELD", "SAT.VELD", "EC25.VELD", "pH.VELD", "TEMP.VELD")) %>%
-    ggplot(aes(x = FieldSamplingDate, y = ResultFormattedNumeric, color = Label)) +
+    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = Label)) +
     geom_line(linewidth = 1) +
     geom_point() +
     scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
@@ -519,7 +567,7 @@ maucha <- function(x, col = NULL,
 ionen <- data %>%
   filter(Component %in% c("K", "Na", "Ca", "Mg", "SO4", "Cl", "HCO3", "CO3")) %>%
   group_by(Component, CODE) %>%
-  summarise(gemiddelde = mean(ResultFormattedNumeric))
+  summarise(gemiddelde = mean(ResultCalc))
 
 # to wide format
 ionenwide <- pivot_wider(ionen, names_from = Component, values_from = gemiddelde)
@@ -542,7 +590,7 @@ maucha(ionenwide)
 KAL0001 <- data %>%
   filter(Component %in% c("K", "Na", "Ca", "Mg", "SO4", "Cl", "HCO3", "CO3") & CODE == "ANTKAL0001") %>%
   group_by(Component, FieldSamplingDate) %>%
-  summarise(gemiddelde = mean(ResultFormattedNumeric)) %>%
+  summarise(gemiddelde = mean(ResultCalc)) %>%
   select(FieldSamplingDate, Component, gemiddelde)
 
 # to wide format
@@ -562,7 +610,7 @@ for (locatie in locaties) {
   data_ID <- data %>%
   filter(Component %in% c("K", "Na", "Ca", "Mg", "SO4", "Cl", "HCO3", "CO3") & CODE == locatie) %>%
   group_by(Component, FieldSamplingDate) %>%
-  summarise(gemiddelde = mean(ResultFormattedNumeric)) %>%
+  summarise(gemiddelde = mean(ResultCalc)) %>%
   select(FieldSamplingDate, Component, gemiddelde)
   
   # data naar wide-format
@@ -585,7 +633,7 @@ locatie <- "ANTKAL0021"
 data_locatie <- data %>%
   filter(Component %in% c("K", "Na", "Ca", "Mg", "SO4", "Cl", "HCO3", "CO3") & CODE == locatie) %>%
   group_by(Component, FieldSamplingDate) %>%
-  summarise(gemiddelde = mean(ResultFormattedNumeric)) %>%
+  summarise(gemiddelde = mean(ResultCalc)) %>%
   select(FieldSamplingDate, Component, gemiddelde)
 
 # to wide format
@@ -613,7 +661,7 @@ ref_punten <- data.frame(
 # gemiddelde Cl en Ca concentraties per locatie
 IREGVdata <- data %>% 
   filter(Component %in% c("Ca", "Cl", "EC25.VELD")) %>%
-  group_by(CODE, Component) %>% summarise(gemiddelde = mean(ResultFormattedNumeric))
+  group_by(CODE, Component) %>% summarise(gemiddelde = mean(ResultCalc))
 
 # naar wide format (componenten als kolommen)
 IREGVwide <- pivot_wider(IREGVdata, names_from = Component, values_from = gemiddelde)
