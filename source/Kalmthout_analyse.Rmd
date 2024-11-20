@@ -439,6 +439,7 @@ for (ID in locaties) {
 
 ## Zoutgehalte
 ```{r}
+locaties <- unique(data$CODE)
 # SO4
 for (ID in locaties) {
   figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SO4" , paste("Sulfaat + MKN gemiddelde", ID), yas = "Meetwaarde (mg/L)") +
@@ -448,6 +449,14 @@ for (ID in locaties) {
          filename = paste0("./exports/SO4/", ID,"_SO4", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
+# SO4_S
+for (ID in locaties) {
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SO4_S" , paste("Sulfaat-S", ID), yas = "Meetwaarde (mg S/L)") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 15, linewidth = 1, colour = "black", linetype = "dashed")
+  print(figuur)
+  ggsave(plot = figuur,
+         filename = paste0("./exports/SO4_S/", ID,"_SO4_S", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
+}
 
 # EC25.VELD
 for (ID in locaties) {
