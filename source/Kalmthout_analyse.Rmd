@@ -96,6 +96,28 @@ for (Variabele in Componenten) {
 }
 ```
 
+# Gemiddelde waarden per locatie per variabele
+```{r}
+# fysische variabelen
+gemiddeldes <- data %>%
+  filter(AquaComponent %in% c("pH_veld", "T_veld", "O2verz", "O2_veld", "EGV25_veld", "sal_veld", "alkaliniteit", "SD_veld", "ZS.105")) %>% group_by(CODE, AquaComponent) %>% summarise(gemiddelde = mean(ResultCalc))
+
+# naar wide
+gemiddelde_wide <- pivot_wider(gemiddeldes, names_from = AquaComponent, values_from = gemiddelde)
+write.csv(gemiddelde_wide, file = "./exports/gemiddeldes_fysisch.csv")
+
+```
+
+```{r}
+# chemische variabelen
+gemiddeldes <- data %>%
+  filter(AquaComponent %in% c("TP", "TN", "NO3_N", "NO2_N", "NH4_N", "PO4_P", "Si", "Ca", "K", "Mg", "Na", "Cl", "SO4")) %>% group_by(CODE, AquaComponent) %>% summarise(gemiddelde = mean(ResultCalc))
+
+# naar wide
+gemiddelde_wide <- pivot_wider(gemiddeldes, names_from = AquaComponent, values_from = gemiddelde)
+write.csv(gemiddelde_wide, file = "./exports/gemiddeldes_chemisch.csv")
+```
+
 
 # functies
 ```{r}
