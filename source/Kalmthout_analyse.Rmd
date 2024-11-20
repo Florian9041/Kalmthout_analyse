@@ -22,6 +22,7 @@ options(repos = c(
 #install.packages('ggpubr')
 ```
 
+# packages
 ```{r setup, results ='hide', eval = TRUE, echo = FALSE, message = FALSE, cache = FALSE, purl = FALSE, warning = FALSE}
 library(knitr)
 opts_chunk$set(
@@ -47,6 +48,7 @@ library(tidyverse)
 
 ```
 
+# data inlezen
 ```{r}
 data <- read.csv2("./data/AC_Kalmthout_ruwe_data_lang_2024-11-19.csv")
 data$FieldSamplingDate <- as.Date(data$FieldSamplingDate, format = "%d/%m/%Y")
@@ -54,6 +56,11 @@ data$ResultCalc <- as.numeric(data$ResultCalc)
 # verwijder data van voor 2023
 data <- data %>%
   filter(FieldSamplingDate >= "2023-01-01")
+# vervang "M" door "m"
+data$AquaUnit[data$AquaUnit == "M"] <- "m"
+data$Unit[data$Unit == "M"] <- "m"
+data$label[data$label == "SD_veld (M)"] <- "SD_veld (m)"
+data$ResultCalc[data$AquaComponent == "SD_veld" & data$ResultCalc == 29] <- 0.29
 ```
 
 # componenten
@@ -71,6 +78,24 @@ unique(data$FieldSampleID)
 length(unique(data$CODE))
 # 27 locaties
 ```
+
+# Boxplots variabelen
+```{r}
+Componenten <- unique(data$AquaComponent)
+
+for (Variabele in Componenten) {
+  data_figuur <- data %>%
+    filter(AquaComponent %in% Variabele)
+  figuur <- ggplot(data_figuur,
+                   aes(x = ResultCalc, y = FieldSampleID)) +
+    geom_boxplot() +
+    labs(title = paste0("Kalmthout variabele ",data_figuur$label)) +
+    ylab("Locatie") + xlab(paste0("Meetwaarde (", data_figuur$AquaUnit ,")"))
+  ggsave(figuur,
+         filename = paste0("./exports/boxplots/", "Kalmthout_",Variabele, "_bw",".jpg"))
+}
+```
+
 
 # functies
 ```{r}
@@ -142,6 +167,8 @@ pH_max <- 5.5 # Synbiosys/Runhaar (2008/2009); Van Calster et al., 2020
 pH_max <- 6.5 # BVR 2010
 pH_min <- 4.5 # BVR 2010
 ```
+
+
 
 # percentage plassen dat voldoet aan MKN
 ## Totale fosfor (TP)
@@ -245,6 +272,21 @@ for (ID in locaties) {
 ```
 
 ### Anorganische stikstof
+
+```{r}
+# voeg anorganische stikstof toe als variabele in tabel (N_anorg = NH4_N + NO3_N + NO2_N)
+N_anorg <- data %>% group_by(CODE, FieldSamplingDate) %>% 
+  filter(AquaComponent %in% c("NH4_N", "NO3_N", "NO2_N")) %>% 
+  summarise(N_anorg = sum(ResultCalc))
+N_anorg <- N_anorg %>% 
+  rename(ResultCalc = N_anorg)
+N_anorg$label <- "N_anorg (mg N/l)"
+N_anorg$AquaComponent <- "N_anorg"
+N_anorg$AquaUnit <- "mg N/l"
+N_anorg$Component <- "N_anorg"
+data_met_N_anorg <- bind_rows(data, N_anorg)
+```
+
 ```{r}
 # herordenen van variabelen van groot > klein
 anorg_N_KAL0384 <- data %>%
@@ -291,6 +333,32 @@ for (ID in locaties) {
 
 ```
 
+### Nu met N_anorg erbij
+```{r}
+# loop
+locaties <- unique(data$CODE)
+for (ID in locaties) {
+  # subset voor locatie
+  N_anorg_ID <- data_met_N_anorg %>%
+  filter(AquaComponent %in% c("NH4_N", "NO3_N", "NO2_N", "N_anorg") & CODE == ID)
+  
+  # orden van klein naar groot
+  N_anorg_ID$label <- factor(N_anorg_ID$label, unique(N_anorg_ID[order(N_anorg_ID$ResultCalc, decreasing = T), "label"]))
+  # plot figuur
+  figuur <- N_anorg_ID %>%
+    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, fill = label)) +
+    geom_area(position = "identity", alpha = 0.6) +
+    scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
+    labs(title = paste("Anorganische stikstof", ID ,"(N_anorg = NH4_N + NO3_N + NO2_N)")) +
+    xlab("Datum staalname") + 
+    ylab("Meetwaarde (mg N/L)")  + 
+    scale_fill_discrete("Variabelen") + scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
+  print(figuur)
+  ggsave(plot = figuur,
+         filename = paste0("./exports/N_anorg(2)/", ID,"_N_anorg2", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
+}
+
+```
 
 ## Zuurtegraad
 ```{r}
