@@ -124,7 +124,7 @@ N.NO2_jaargem <- 0.2 # BVR
 N.NO2_max <- 0.6 # BVR
 BOD_90p <- 6 # BVR
 COD_90p <- 30 # BVR
-T.P <- 0.04 # mg P/L - T'jollyn et al. 2009, totaalfosfor: naar Denys et al. (2005), Heinis & Evers (2007); omzetting KRWen N2000-typen: Bal et al. (2001), Fellinger et al. (2004)
+T.P <- 0.04 # mg P/L - T'jollyn et al. 2009, totaalfosfor: naar Denys et al. (2005), Heinis & Evers (2007); omzetting KRW en N2000-typen: Bal et al. (2001), Fellinger et al. (2004)
 T.P_zomerhalfjaargem <- 0.03 # mg P/L BVR
 T.N <- 0.59 # mg N/L - T'jollyn et al. 2009, totaalstikstof: Heinis &Evers (2007)
 T.N_zomerhalfjaargem <- 1.3 # mg N/L BVR 2010
@@ -522,7 +522,7 @@ maucha <- function(x, col = NULL,
     }
     
     if(labels){
-      lab <- c("K", "Na", "Cl", "Mg", "SO4", "Cl", "HCO3", "CO3")
+      lab <- c("K", "Na", "Ca", "Mg", "SO4", "Cl", "HCO3", "CO3")
       lab.pos.x <- coord.x[3, ]
       lab.pos.y <- coord.y[3, ]
       lab.pos.x[a < R] <- coord.poly.x[3, a < R]
@@ -561,7 +561,7 @@ maucha <- function(x, col = NULL,
 }
 ```
 
-### Maak dataset met ionen
+## Maak dataset met ionen
 ```{r}
 # dataset met ionen (gemiddelde waarde per locatie)
 ionen <- data %>%
@@ -575,34 +575,42 @@ ionenwide <- ionenwide %>% select(CODE, K, Na, Ca, Mg, SO4, Cl, HCO3, CO3)
 ```
 
 
-# Maucha-diagram
-
-## Maucha-diagram voor alle locaties (gemiddelde per locatie)
+### Maucha-diagram voor alle locaties (gemiddelde per locatie)
 ```{r}
 # converteer kolom met locatiecode naar row.names voor maucha-functie
 ionenwide <- ionenwide %>% remove_rownames %>% column_to_rownames(var = "CODE")
 maucha(ionenwide)
 ```
 
-## Maucha-diagram per locatie
-### Maak dataset aan voor locatie x
+### Maucha-diagram per locatie
+#### Maak dataset aan voor locatie x
 ```{r}
-KAL0001 <- data %>%
-  filter(Component %in% c("K", "Na", "Ca", "Mg", "SO4", "Cl", "HCO3", "CO3") & CODE == "ANTKAL0001") %>%
+#"ANTKAL0021"  "ANTKAL0001"  "ANTKAL0385"  "ANTKAL0344"  "AN_KAL_006"  "ANTKAL0482"  "ANTKAL0483" 
+#"AN_KAL_002"  "ANTKAL0306"  "ANTKAL0123"  "AN_KAL_003"  "ANTKAL0011"  "ANTKAL0284"  "AN_KAL_007" 
+#"AN_NOL_003"  "AN_NOL_001"  "ANTKAL0309"  "ANTKAL0289"  "ANTKAL0356"  "ANTKAL0217"  "ANTKAL0350" 
+#"ANTKAL0384"  "ANTKAL0492"  "ANTKAL0276"  "ANTKAL0478"  "ANTKAL0386a" "ANTKAL0386b"
+locatie <- "AN_KAL_003"
+
+
+datamaucha <- data %>%
+  filter(Component %in% c("K", "Na", "Ca", "Mg", "SO4", "Cl", "HCO3", "CO3") & CODE == locatie) %>%
   group_by(Component, FieldSamplingDate) %>%
   summarise(gemiddelde = mean(ResultCalc)) %>%
   select(FieldSamplingDate, Component, gemiddelde)
 
 # to wide format
-KAL0001wide <- pivot_wider(KAL0001, names_from = Component, values_from = gemiddelde)
+datamauchawide <- pivot_wider(datamaucha, names_from = Component, values_from = gemiddelde)
+# kolommen in juiste volgorde (! belangrijk voor correct Maucha-diagram)
+datamauchawide <- datamauchawide %>%
+  select(FieldSamplingDate, K, Na, Ca, Mg, SO4, Cl, HCO3, CO3)
 
 # converteer kolom met datum staalname naar row.names voor maucha-functie
-KAL0001wide <- KAL0001wide %>% remove_rownames %>% column_to_rownames(var = "FieldSamplingDate")
-maucha(KAL0001wide)
+datamauchawide <- datamauchawide %>% remove_rownames %>% column_to_rownames(var = "FieldSamplingDate")
+maucha(datamauchawide)
 
 ```
 
-### loop met maucha per locatie
+#### loop met maucha per locatie
 ```{r}
 locaties <- unique(data$CODE)
 for (locatie in locaties) {
@@ -621,28 +629,6 @@ for (locatie in locaties) {
   maucha(data_wide)
   print(locatie)
 }
-```
-
-```{r}
-#"ANTKAL0021"  "ANTKAL0001"  "ANTKAL0385"  "ANTKAL0344"  "AN_KAL_006"  "ANTKAL0482"  "ANTKAL0483" 
-#"AN_KAL_002"  "ANTKAL0306"  "ANTKAL0123"  "AN_KAL_003"  "ANTKAL0011"  "ANTKAL0284"  "AN_KAL_007" 
-#"AN_NOL_003"  "AN_NOL_001"  "ANTKAL0309"  "ANTKAL0289"  "ANTKAL0356"  "ANTKAL0217"  "ANTKAL0350" 
-#"ANTKAL0384"  "ANTKAL0492"  "ANTKAL0276"  "ANTKAL0478"  "ANTKAL0386a" "ANTKAL0386b"
-locatie <- "ANTKAL0021"
-
-data_locatie <- data %>%
-  filter(Component %in% c("K", "Na", "Ca", "Mg", "SO4", "Cl", "HCO3", "CO3") & CODE == locatie) %>%
-  group_by(Component, FieldSamplingDate) %>%
-  summarise(gemiddelde = mean(ResultCalc)) %>%
-  select(FieldSamplingDate, Component, gemiddelde)
-
-# to wide format
-datawide <- pivot_wider(data_locatie, names_from = Component, values_from = gemiddelde)
-
-# converteer kolom met datum staalname naar row.names voor maucha-functie
-datawide <- datawide %>% remove_rownames %>% column_to_rownames(var = "FieldSamplingDate")
-maucha(datawide)
-
 ```
 
 
