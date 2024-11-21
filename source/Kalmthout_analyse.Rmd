@@ -100,7 +100,7 @@ for (Variabele in Componenten) {
 ```{r}
 # fysische variabelen
 gemiddeldes <- data %>%
-  filter(AquaComponent %in% c("pH_veld", "T_veld", "O2verz", "O2_veld", "EGV25_veld", "sal_veld", "alkaliniteit", "SD_veld", "ZS.105")) %>% group_by(CODE, AquaComponent) %>% summarise(gemiddelde = mean(ResultCalc))
+  filter(AquaComponent %in% c("pH_veld", "T_veld", "O2verz", "O2_veld", "EGV25_veld", "sal_veld", "alkaliniteit", "SD_veld", "ZS_105")) %>% group_by(CODE, AquaComponent) %>% summarise(gemiddelde = mean(ResultCalc))
 
 # naar wide
 gemiddelde_wide <- pivot_wider(gemiddeldes, names_from = AquaComponent, values_from = gemiddelde)
@@ -169,12 +169,16 @@ NH3_jaargem <- 0.03 # BVR
 NH3_max <- 0.1 # BVR
 N.NO2_jaargem <- 0.2 # BVR
 N.NO2_max <- 0.6 # BVR
+
 BOD_90p <- 6 # BVR
 COD_90p <- 30 # BVR
-T.P <- 0.04 # mg P/L - T'jollyn et al. 2009, totaalfosfor: naar Denys et al. (2005), Heinis & Evers (2007); omzetting KRW en N2000-typen: Bal et al. (2001), Fellinger et al. (2004)
+
+T.P <- 0.04 # mg P/L - T'jollyn et al. 2009
 T.P_zomerhalfjaargem <- 0.03 # mg P/L BVR
-T.N <- 0.59 # mg N/L - T'jollyn et al. 2009, totaalstikstof: Heinis &Evers (2007)
+
+T.N <- 0.59 # mg N/L - T'jollyn et al. 2009
 T.N_zomerhalfjaargem <- 1.3 # mg N/L BVR 2010
+
 # Zoutgehalte
 EGV_90p <- 100 # BVR
 Cl_90p <- 20 # BVR
@@ -188,6 +192,9 @@ O2_verz_max <- 120 # BVR
 pH_max <- 5.5 # Synbiosys/Runhaar (2008/2009); Van Calster et al., 2020
 pH_max <- 6.5 # BVR 2010
 pH_min <- 4.5 # BVR 2010
+
+# Helderheid
+Secchi_Diepte_zomerhalfjaargem <- 0.9 # BVR 2010
 ```
 
 
@@ -391,6 +398,15 @@ for (ID in locaties) {
   ggsave(plot = figuur,
          filename = paste0("./exports/pH/", ID,"_pH", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
+
+# toetsing MKN-normen
+pH_bereik <- data %>%
+  filter(AquaComponent %in% "pH_veld") %>%
+  group_by(CODE) %>%
+  summarise(pH_min = min(ResultCalc),
+            pH_max = max(ResultCalc),
+            bereik = paste0(min(ResultCalc), " - ", max(ResultCalc)))
+write.csv(pH_bereik, file = "./exports/pH_bereik.csv")
 ```
 
 
@@ -422,6 +438,14 @@ for (ID in locaties) {
   ggsave(plot = figuur,
          filename = paste0("./exports/Secchi/", ID,"_Secchi", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
+
+# toetsing MKN-norm
+SD_zomerhalfjaargem <- data %>% filter(AquaComponent %in% "SD_veld") %>%
+  mutate(month = format(FieldSamplingDate, "%m")) %>%
+  filter(month %in% c("04", "05", "06", "07", "08", "09")) %>%
+  group_by(CODE) %>%
+  summarise(SD_zomerhalfjaargem = mean(ResultCalc)) %>%
+  write.csv(file = "./exports/SD_zhjgem.csv")
 ```
 
 
@@ -436,6 +460,13 @@ for (ID in locaties) {
          filename = paste0("./exports/O2_conc/", ID,"_O2c", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
+# toetsing MKN-normen
+data %>%
+  filter(AquaComponent %in% "O2_veld") %>%
+  group_by(CODE) %>%
+  summarise(O2conc_p10 = quantile(ResultCalc , probs = 0.1)) %>%
+  write.csv(file = "./exports/O2_conc_p10.csv")
+
 # verzadiging
 for (ID in locaties) {
   figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SAT.VELD" , paste("Zuurstof-verzadiging + MKN maximum", ID), yas = "Meetwaarde (%)") +
@@ -444,6 +475,13 @@ for (ID in locaties) {
   ggsave(plot = figuur,
          filename = paste0("./exports/O2_verz/", ID,"_O2v", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
+
+# toetsing MKN-normen
+data %>%
+  filter(AquaComponent %in% "O2verz") %>%
+  group_by(CODE) %>%
+  summarise(O2max_verz = max(ResultCalc)) %>%
+  write.csv(file = "./exports/O2_max_verz.csv")
 ```
 
 
@@ -456,11 +494,16 @@ for (ID in locaties) {
   ggsave(plot = figuur,
          filename = paste0("./exports/Temp/", ID,"_Temp", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
+
+Temp_max <- data %>%
+  filter(AquaComponent %in% "T_veld") %>%
+  group_by(CODE) %>%
+  summarise(T_max = max(ResultCalc)) %>%
+  write.csv(file = "./exports/T_max.csv")
 ```
 
 ## Zoutgehalte
 ```{r}
-
 
 # SO4
 locaties <- unique(data$CODE)
@@ -496,6 +539,13 @@ for (ID in locaties) {
   ggsave(plot = figuur,
          filename = paste0("./exports/EGV/", ID,"_EGV", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
+
+# toetsing MKN-norm
+data %>%
+  filter(AquaComponent %in% "EGV25_veld") %>%
+  group_by(CODE) %>%
+  summarise(EGV_90p = quantile(ResultCalc, probs = 0.9)) %>%
+  write.csv(file = "./exports/EGV_90p.csv")
 
 # chloride
 for (ID in locaties) {
