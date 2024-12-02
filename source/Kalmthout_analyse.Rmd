@@ -106,6 +106,13 @@ gemiddeldes <- data %>%
 gemiddelde_wide <- pivot_wider(gemiddeldes, names_from = AquaComponent, values_from = gemiddelde)
 write.csv(gemiddelde_wide, file = "./exports/gemiddeldes_fysisch.csv")
 
+# TN & N_anorg
+data_N_org <- data_met_N_anorg %>% filter(AquaComponent %in% c("TN", "N_anorg")) %>%
+  group_by(CODE, AquaComponent) %>% summarise(gemiddelde = mean(ResultCalc))
+data_N_org_wide <- pivot_wider(data_N_org, names_from = AquaComponent, values_from = gemiddelde)
+data_N_org_wide <- data_N_org_wide %>%
+  mutate(N_org = TN - N_anorg) %>%
+  write.csv(file = "./exports/N_org.csv")
 ```
 
 ```{r}
@@ -483,6 +490,11 @@ for (ID in locaties) {
          filename = paste0("./exports/abs_440/", ID,"_abs_440", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
+data %>% filter(AquaComponent %in% "absorptie_440") %>%
+  group_by(CODE) %>%
+  summarise(abs440_gem = mean(ResultCalc)) %>%
+  write.csv(file = "./exports/abs440_gem.csv")
+
 maak_plot_1var(data, "absorptie_440", "Absorptie (440 nm)", yas = "Meetwaarde (ABS)")
 
 # chlorofyl-a
@@ -495,6 +507,14 @@ for (ID in locaties) {
 }
 
 maak_plot_1var(data, "chl_a", "chlorofyl-a Kalmthout", yas = "Meetwaarde (µg/L)")
+
+## zomerhalfjaargemiddelde chl_a voor KRW-norm
+data %>%
+  filter(AquaComponent %in% "chl_a" & months(FieldSamplingDate, FALSE) %in% month.name[c(4:9)], ) %>% # filter zomerhalfjaar (april t.e.m. september)
+  group_by(CODE) %>%
+  summarise(chla_zhjgem = mean(ResultCalc)) %>%
+  write.csv(file = "./exports/chla_zomerhalfjaar.csv")
+  
 
 # zwevende stof
 for (ID in locaties) {
@@ -515,6 +535,17 @@ for (ID in locaties) {
   ggsave(plot = figuur,
          filename = paste0("./exports/ZS550-105/", ID,"_ZS550_105", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
+
+data %>% filter(AquaComponent %in% "ZS_105") %>%
+  group_by(CODE) %>%
+  summarise(ZS105_gem = mean(ResultCalc)) %>%
+  write.csv(file = "./exports/ZS_105_gem.csv")
+
+data %>% filter(AquaComponent %in% "ZS_550") %>%
+  group_by(CODE) %>%
+  summarise(ZS550_gem = mean(ResultCalc)) %>%
+  write.csv(file = "./exports/ZS_550_gem.csv")
+
 
 # secchi-diepte
 for (ID in locaties) {
