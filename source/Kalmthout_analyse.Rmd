@@ -122,34 +122,32 @@ write.csv(gemiddelde_wide, file = "./exports/gemiddeldes_chemisch.csv")
 # functies
 ```{r}
 # genereer plot en sla op
-save_plot <- function(dataset, component, naam, title = NULL, xas = NULL, yas = NULL, naam_linetype = NULL, labels_linetype = NULL){
+save_plot <- function(dataset, component, naam, title = NULL, xas = NULL, yas = NULL){
   figuur <- dataset %>%
     filter(AquaComponent %in% component) %>%  
     ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = Label, linetype = CODE)) +
     scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") + # visualiseert data per maand in format maand-jaar
     geom_line(linewidth = 1) +
     geom_point() +
-    labs(title = title) + xlab(xas) + ylab(yas) +
-  scale_linetype_discrete(name = naam_linetype, labels = labels_linetype)
+    labs(title = title) + xlab(xas) + ylab(yas)
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/NKP_", naam, ".jpg"), width = 9, height = 6)
 }
 
 # puur om plot te genereren
-maak_plot <- function(dataset, component, title = NULL, xas = NULL, yas = NULL, naam_linetype = NULL, labels_linetype = NULL){
+maak_plot <- function(dataset, component, title = NULL, xas = NULL, yas = NULL){
   figuur <- dataset %>%
     filter(AquaComponent %in% component) %>%  
-    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = Label, linetype = CODE)) +
+    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = label)) +
     scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") + # visualiseert data per maand in format maand-jaar
     geom_line(linewidth = 1) +
     geom_point() +
-    labs(title = title) + xlab(xas) + ylab(yas) +
-  scale_linetype_discrete(name = naam_linetype, labels = labels_linetype)
+    labs(title = title) + xlab(xas) + ylab(yas)
   figuur
 }
 
-# plots genereren voor 1 variabele (trendlijn randzone + trendlijn zonnepanelen)
+# plots genereren voor 1 variabele
 maak_plot_1var <- function(dataset, component, title = NULL, xas = "Datum staalname", yas = NULL){
   figuur <- dataset %>%
     filter(AquaComponent %in% component) %>%  
@@ -420,6 +418,33 @@ data %>%
   write.csv(file = "./exports/NH3.csv")
 ```
 
+### Organische stikstof
+```{r}
+# loop
+locaties <- unique(data$CODE)
+for (ID in locaties) {
+  # subset voor locatie
+  N_org_ID <- data_met_N_anorg %>%
+  filter(AquaComponent %in% c("TN", "N_anorg") & CODE == ID)
+  
+  # orden van klein naar groot
+  N_org_ID$label <- factor(N_org_ID$label, unique(N_org_ID[order(N_org_ID$ResultCalc, decreasing = T), "label"]))
+  # plot figuur
+  figuur <- N_org_ID %>%
+    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, fill = label)) +
+    geom_area(position = "identity", alpha = 0.6) +
+    scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
+    labs(title = paste("Organische stikstof", ID ,"(N_org = TN - N_anorg)")) +
+    xlab("Datum staalname") + 
+    ylab("Meetwaarde (mg N/L)")  + 
+    scale_fill_discrete("Variabelen") + scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
+  print(figuur)
+  ggsave(plot = figuur,
+         filename = paste0("./exports/N_org/", ID,"_N_org", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
+}
+```
+
+
 ## Zuurtegraad
 ```{r}
 for (ID in locaties) {
@@ -482,6 +507,14 @@ for (ID in locaties) {
 
 maak_plot_1var(data, "ZS_105", "Zwevende stof (105°C) Kalmthout", yas = "Meetwaarde (g/L)")
 
+## zwevende stof ZS550 - ZS105
+for (ID in locaties) {
+  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("ZS_105", "ZS_550") , paste("Zwevende stof (550 & 105°C)", ID), yas = "Meetwaarde (g/L)") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
+  print(figuur)
+  ggsave(plot = figuur,
+         filename = paste0("./exports/ZS550-105/", ID,"_ZS550_105", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
+}
 
 # secchi-diepte
 for (ID in locaties) {
@@ -495,7 +528,7 @@ for (ID in locaties) {
 maak_plot_1var(data, "SD_veld", "Secchi-diepte Kalmthout (+ MKN Zomerhalfjaargemiddelde)", yas = "Meetwaarde (m)") + 
   geom_hline(yintercept = 0.9, color = "black", linetype = "dashed", linewidth = 1)
 
-# combo
+# humuszuren (absorptie_440)
 for (ID in locaties) {
   figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "absorptie_440" , paste("Absorptie_440", ID), yas = "Meetwaarde (ABS)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
@@ -503,6 +536,16 @@ for (ID in locaties) {
   ggsave(plot = figuur,
          filename = paste0("./exports/abs_440/", ID,"_abs_440", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
+
+# combinatie chl_a, SD_veld, ZS105, abs440
+for (ID in locaties){
+  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("absorptie_440", "ZS_105", "SD_veld", "chl_a"), paste("Helderheid", ID), yas = "Meetwaarde (log10)") +
+    scale_y_log10()
+  print(figuur)
+  ggsave(plot = figuur,
+         filename = paste0("./exports/helderheid/", ID, "helderheid", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
+}
+
 
 # toetsing MKN-norm
 SD_zomerhalfjaargem <- data %>% filter(AquaComponent %in% "SD_veld") %>%
