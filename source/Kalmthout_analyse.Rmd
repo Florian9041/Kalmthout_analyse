@@ -89,10 +89,10 @@ for (Variabele in Componenten) {
   figuur <- ggplot(data_figuur,
                    aes(x = ResultCalc, y = FieldSampleID)) +
     geom_boxplot() +
-    labs(title = paste0("Kalmthout variabele ",data_figuur$label)) +
+    labs(title = paste0("Kalmthout variabele ",data_figuur$label, "\n")) +
     ylab("Locatie") + xlab(paste0("Meetwaarde (", data_figuur$AquaUnit ,")"))
   ggsave(figuur,
-         filename = paste0("./exports/boxplots/", "Kalmthout_",Variabele, "_bw",".jpg"))
+         filename = paste0("./exports/boxplots/", "Kalmthout_",Variabele, "_bw",".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 ```
 
