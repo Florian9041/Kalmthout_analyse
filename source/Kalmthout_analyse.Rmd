@@ -476,6 +476,24 @@ maak_plot_1var(data, "pH_veld", "Zuurtegraad Kalmthout (MKN minimum - maximum)",
     geom_hline(yintercept = 6.5, color = "black", linetype = "dashed", linewidth = 1)
 ```
 
+## Waterdiepte
+```{r}
+data %>% 
+  filter(AquaComponent %in% c("WD_veld", "SD_veld") & months(FieldSamplingDate, FALSE) %in% month.name[c(4:9)], ) %>% 
+  group_by(CODE, AquaComponent) %>% 
+  summarise(zomerhalfjaargem = mean(ResultCalc)) %>%
+  pivot_wider(names_from = AquaComponent, values_from = zomerhalfjaargem) %>%
+  write.csv(file = "./exports/WD_SD_zhj.csv")
+
+# boxplots met waterdiepte en secchi-diepte
+data %>%
+  filter(AquaComponent %in% c("WD_veld", "SD_veld")) %>%
+  ggplot(aes(x = ResultCalc, y = CODE, color = AquaComponent)) +
+  geom_boxplot() +
+  scale_color_discrete("Variabele", labels = c("Secchi-diepte", "Waterdiepte")) +
+  ylab("Locatie") + xlab("Meetwaarde (m)") +
+  ggtitle("Doorzicht en waterdiepte locaties Kalmthout\n")
+```
 
 ## Helderheid (chlorofyl, zwevende stof, secchi)
 ```{r}
@@ -577,6 +595,14 @@ for (ID in locaties){
          filename = paste0("./exports/helderheid/", ID, "helderheid", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
+# combinatie pH & absorptie
+for (ID in locaties){
+  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("absorptie_440", "pH_veld"), paste("Zuurtegraad & absorptie (440 nm)", ID), yas = "Meetwaarde (log10)") +
+    scale_y_log10()
+  print(figuur)
+  ggsave(plot = figuur,
+         filename = paste0("./exports/pH_abs/", ID, "pH_abs", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
+}
 
 # toetsing MKN-norm
 SD_zomerhalfjaargem <- data %>% filter(AquaComponent %in% "SD_veld") %>%
