@@ -61,6 +61,10 @@ data$AquaUnit[data$AquaUnit == "M"] <- "m"
 data$Unit[data$Unit == "M"] <- "m"
 data$label[data$label == "SD_veld (M)"] <- "SD_veld (m)"
 data$ResultCalc[data$AquaComponent == "SD_veld" & data$ResultCalc == 29] <- 0.29
+
+# vector met locaties
+locaties <- unique(data$CODE)
+
 ```
 
 # componenten
@@ -154,7 +158,7 @@ maak_plot <- function(dataset, component, title = NULL, xas = NULL, yas = NULL){
   figuur
 }
 
-# plots genereren voor 1 variabele
+# plots genereren voor 1 variabele (voor 1 locatie)
 maak_plot_1var <- function(dataset, component, title = NULL, xas = "Datum staalname", yas = NULL){
   figuur <- dataset %>%
     filter(AquaComponent %in% component) %>%  
@@ -167,6 +171,18 @@ maak_plot_1var <- function(dataset, component, title = NULL, xas = "Datum staaln
   figuur
 }
 
+# voor 1 variabele voor alle locaties
+maak_plot_1var_loc <- function(dataset, component, title = NULL, xas = "Datum staalname", yas = NULL){
+  figuur <- dataset %>%
+    filter(AquaComponent %in% component) %>%  
+    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = CODE)) +
+    scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") + # visualiseert data per maand in format maand-jaar
+    scale_y_continuous(breaks = pretty_breaks(n = 10)) +
+    geom_line(linewidth = 1) +
+    geom_point() +
+    labs(title = title) + xlab(xas) + ylab(yas)
+  figuur
+}
 ```
 
 # Abiotische bereiken 3160 (watertype Zm/Zs)
@@ -466,18 +482,18 @@ data %>% filter(AquaComponent %in% "absorptie_440") %>%
   summarise(abs440_gem = mean(ResultCalc)) %>%
   write.csv(file = "./exports/abs440_gem.csv")
 
-maak_plot_1var(data, "absorptie_440", "Absorptie (440 nm)", yas = "Meetwaarde (ABS)")
+maak_plot_1var_loc(data, "absorptie_440", "Absorptie (440 nm)\n", yas = "Meetwaarde (ABS)")
 
 # chlorofyl-a
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "CHL.A" , paste("Chlorofyl-a", ID), yas = "Meetwaarde (µg/L)") +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "chl_a" , paste("Chlorofyl-a", ID, "\n"), yas = "Meetwaarde (µg/L)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/CHL_A/", ID,"_CHL_A", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "chl_a", "chlorofyl-a Kalmthout", yas = "Meetwaarde (µg/L)")
+maak_plot_1var_loc(data, "chl_a", "chlorofyl-a Kalmthout\n", yas = "Meetwaarde (µg/L)")
 
 ## zomerhalfjaargemiddelde chl_a voor KRW-norm
 data %>%
@@ -489,18 +505,18 @@ data %>%
 
 # zwevende stof
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "ZS_105" , paste("Zwevende stof (105°C)", ID), yas = "Meetwaarde (g/L)") +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "ZS_105" , paste("Zwevende stof (105°C)", ID, "\n"), yas = "Meetwaarde (g/L)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/ZS105/", ID,"_ZS105", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "ZS_105", "Zwevende stof (105°C) Kalmthout", yas = "Meetwaarde (g/L)")
+maak_plot_1var_loc(data, "ZS_105", "Zwevende stof (105°C) Kalmthout\n", yas = "Meetwaarde (g/L)")
 
 ## zwevende stof ZS550 - ZS105
 for (ID in locaties) {
-  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("ZS_105", "ZS_550") , paste("Zwevende stof (550 & 105°C)", ID), yas = "Meetwaarde (g/L)") +
+  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("ZS_105", "ZS_550") , paste("Zwevende stof (550 & 105°C)", ID, "\n"), yas = "Meetwaarde (g/L)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
