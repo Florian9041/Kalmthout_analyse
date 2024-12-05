@@ -435,6 +435,11 @@ for (ID in locaties) {
   ggsave(plot = figuur,
          filename = paste0("./exports/pH/", ID,"_pH", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
+maak_plot_1var_loc(data, "pH_veld", "Zuurtegraad\n", yas = "Meetwaarde") +
+  geom_hline(yintercept = 4.5, color = "black", linetype = "dashed", linewidth = 1) +
+    geom_hline(yintercept = 5.5, color = "black", linetype = "dashed", linewidth = 1)
+  
+
 
 # toetsing MKN-normen
 pH_bereik <- data %>%
@@ -653,7 +658,7 @@ for (ID in locaties) {
          filename = paste0("./exports/SO4/", ID,"_SO4", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var_loc(data, "SO4", "Sulfaat Kalmthout (+ MKN gemiddelde)", yas = "Meetwaarde (mg/L)") + 
+maak_plot_1var_loc(data, "SO4", "Sulfaat Kalmthout (+ MKN gemiddelde)\n", yas = "Meetwaarde (mg/L)") + 
   geom_hline(yintercept = 15, color = "black", linetype = "dashed", linewidth = 1)
 
 
