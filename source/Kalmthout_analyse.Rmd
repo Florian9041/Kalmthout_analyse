@@ -984,7 +984,7 @@ p1 <- ggplot(ref_punten, aes(x = ec25_ref, y = ir_ref, label = name_ref)) +
   xlab("EGV (µS/cm)") + 
   ylab("IR (%)") + 
   scale_y_continuous(breaks = seq(0,1, by = 0.1)) + 
-  ggtitle("IR-EGV diagram Kalmthout") + 
+  ggtitle("IR-EGV diagram Kalmthout\n") + 
   geom_text(hjust = - 0.5, vjust = - 0.5)
 # voeg locaties Kalmthout toe
 p1 + geom_point(data = IREGVwide, mapping = aes(x = EC25.VELD, y = IR), color = "red")
