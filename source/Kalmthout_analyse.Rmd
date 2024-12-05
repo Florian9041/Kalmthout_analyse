@@ -219,12 +219,10 @@ T.P_max %>%
 
 ```{r}
 # plot TP
-## AN_KAL_003
-maak_plot_1var(data %>% filter(CODE %in% "AN_KAL_003"), "T.P", "Totale fosfor", yas = "Meetwaarde (mg P/L)")
-maak_plot_1var(data, "TP", "Totale fosfor Kalmthout", yas = "Meetwaarde (mg P/L)")
+maak_plot_1var(data, "TP", "Totale fosfor Kalmthout\n", yas = "Meetwaarde (mg P/L)")
 
 # plot TN
-maak_plot_1var(data, "TN", "Totale stikstof Kalmthout", yas = "Meetwaarde (mg N/L)")
+maak_plot_1var(data, "TN", "Totale stikstof Kalmthout\n", yas = "Meetwaarde (mg N/L)")
 
 # plot anorganische stikstof
 maak_plot(data %>% filter(CODE %in% "AN_KAL_002"), c("NO3", "NO2", "NH4"), "Anorganische stikstof", yas = "Meetwaarde (mg/L)")
@@ -273,14 +271,14 @@ for (ID in locaties) {
   figuur <- ggplot(data_figuur,
                    aes(x = FieldSamplingDate, y = ResultCalc)) +
     geom_line(linewidth = 1, colour = "orange") +
-    labs(title = paste("Locatie",ID, " (+ MKN zomerhalfjaargemiddelde)")) + xlab("Datum staalname") + ylab("Meetwaarde (mg P/L)") +
+    labs(title = paste("Locatie",ID, " (+ MKN zomerhalfjaargemiddelde)\n")) + xlab("Datum staalname") + ylab("Meetwaarde (mg P/L)") +
     geom_hline(yintercept = 0.03)
   print(figuur)
 }
 
 # gebruik functie maak_plot_1var
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "T.P" , paste("Totale fosfor T.P", ID, "+ MKN Zomerhalfjaargemiddelde"), yas = "Meetwaarde (mg P/L)") + geom_hline(yintercept = 0.03, color = "black", linetype = "dashed", linewidth = 1) +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "TP" , paste("Totale fosfor TP", ID, "+ MKN Zomerhalfjaargemiddelde\n"), yas = "Meetwaarde (mg P/L)") + geom_hline(yintercept = 0.03, color = "black", linetype = "dashed", linewidth = 1) +
   scale_y_continuous(breaks = pretty_breaks(n = 10))
   print(figuur)
   ggsave(plot = figuur,
