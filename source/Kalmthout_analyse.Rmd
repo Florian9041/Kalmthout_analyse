@@ -547,19 +547,11 @@ for (ID in locaties) {
 }
 maak_plot_1var_loc(data, "SD_veld", "Secchi-diepte Kalmthout (+ MKN Zomerhalfjaargemiddelde)\n", yas = "Meetwaarde (m)") + 
   geom_hline(yintercept = 0.9, color = "black", linetype = "dashed", linewidth = 1)
-
-# humuszuren (absorptie_440)
-for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "absorptie_440" , paste("Absorptie_440", ID), yas = "Meetwaarde (ABS)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
-  print(figuur)
-  ggsave(plot = figuur,
-         filename = paste0("./exports/abs_440/", ID,"_abs_440", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
-}
+maak_plot_1var_loc(data, "WD_veld", "Waterdiepte Kalmthout\n", yas = "Meetwaarde (m)")
 
 # combinatie chl_a, SD_veld, ZS105, abs440
 for (ID in locaties){
-  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("absorptie_440", "ZS_105", "SD_veld", "chl_a"), paste("Helderheid", ID), yas = "Meetwaarde (log10)") +
+  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("absorptie_440", "ZS_105", "SD_veld", "chl_a"), paste("Helderheid", ID, "\n"), yas = "Meetwaarde (log10)") +
     scale_y_log10()
   print(figuur)
   ggsave(plot = figuur,
@@ -568,7 +560,7 @@ for (ID in locaties){
 
 # combinatie pH & absorptie
 for (ID in locaties){
-  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("absorptie_440", "pH_veld"), paste("Zuurtegraad & absorptie (440 nm)", ID), yas = "Meetwaarde (log10)") +
+  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("absorptie_440", "pH_veld"), paste("Zuurtegraad & absorptie (440 nm)", ID, "\n"), yas = "Meetwaarde (log10)") +
     scale_y_log10()
   print(figuur)
   ggsave(plot = figuur,
@@ -589,14 +581,14 @@ SD_zomerhalfjaargem <- data %>% filter(AquaComponent %in% "SD_veld") %>%
 ```{r}
 # concentratie
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "O2_veld" , paste("Zuurstof-concentratie + MKN 10-percentiel", ID), yas = "Meetwaarde (mg/L)") +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "O2_veld" , paste("Zuurstof-concentratie + MKN 10-percentiel", ID, "\n"), yas = "Meetwaarde (mg/L)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 6, linewidth = 1, colour = "black", linetype = "dashed")
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/O2_conc/", ID,"_O2c", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "O2_veld", "Zuurstofconcentratie Kalmthout (+ MKN 10-percentiel)", yas = "Meetwaarde (mg/L)") + 
+maak_plot_1var_loc(data, "O2_veld", "Zuurstofconcentratie Kalmthout (+ MKN 10-percentiel)\n", yas = "Meetwaarde (mg/L)") + 
   geom_hline(yintercept = 6, color = "black", linetype = "dashed", linewidth = 1)
 
 # toetsing MKN-normen
@@ -608,14 +600,14 @@ data %>%
 
 # verzadiging
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SAT.VELD" , paste("Zuurstof-verzadiging + MKN maximum", ID), yas = "Meetwaarde (%)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 120, linewidth = 1, colour = "black", linetype = "dashed")
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "O2verz" , paste("Zuurstof-verzadiging + MKN maximum", ID, "\n"), yas = "Meetwaarde (%)") + geom_hline(yintercept = 120, linewidth = 1, colour = "black", linetype = "dashed") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/O2_verz/", ID,"_O2v", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "O2verz", "Zuurstofverzadiging Kalmthout (+ MKN maximum)", yas = "Meetwaarde (%)") + 
+maak_plot_1var_loc(data, "O2verz", "Zuurstofverzadiging Kalmthout (+ MKN maximum)\n", yas = "Meetwaarde (%)") + 
   geom_hline(yintercept = 120, color = "black", linetype = "dashed", linewidth = 1)
 
 # toetsing MKN-normen
