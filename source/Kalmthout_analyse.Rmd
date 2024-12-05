@@ -65,6 +65,8 @@ data$ResultCalc[data$AquaComponent == "SD_veld" & data$ResultCalc == 29] <- 0.29
 # vector met locaties
 locaties <- unique(data$CODE)
 
+# GIT code om alle veranderingen te aanvaarden
+## git add -A
 ```
 
 # componenten
@@ -534,16 +536,16 @@ data %>% filter(AquaComponent %in% "ZS_550") %>%
   write.csv(file = "./exports/ZS_550_gem.csv")
 
 
-# secchi-diepte
+# secchi- en waterdiepte
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SD_veld" , paste("Secchi-diepte", ID, "(+ MKN  zomerhalfjaargemiddelde)"), yas = "Meetwaarde (m)") +
+  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("SD_veld", "WD_veld") , paste("Secchi- en waterdiepte", ID, "(+ MKN  zomerhalfjaargemiddelde)\n"), yas = "Meetwaarde (m)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) +
     geom_hline(yintercept = 0.9, color = "black", linetype = "dashed", linewidth = 1)
   print(figuur)
   ggsave(plot = figuur,
-         filename = paste0("./exports/Secchi/", ID,"_Secchi", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
+         filename = paste0("./exports/Secchi_WD/", ID,"_Secchi_WD", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
-maak_plot_1var(data, "SD_veld", "Secchi-diepte Kalmthout (+ MKN Zomerhalfjaargemiddelde)", yas = "Meetwaarde (m)") + 
+maak_plot_1var_loc(data, "SD_veld", "Secchi-diepte Kalmthout (+ MKN Zomerhalfjaargemiddelde)\n", yas = "Meetwaarde (m)") + 
   geom_hline(yintercept = 0.9, color = "black", linetype = "dashed", linewidth = 1)
 
 # humuszuren (absorptie_440)
