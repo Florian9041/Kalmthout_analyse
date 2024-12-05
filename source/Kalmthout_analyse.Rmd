@@ -622,14 +622,14 @@ data %>%
 ## Temperatuur
 ```{r}
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "TEMP.VELD" , paste("Temperatuur + MKN maximum", ID), yas = "Meetwaarde (°C)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 25, linewidth = 1, colour = "black", linetype = "dashed")
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "T_veld" , paste("Temperatuur + MKN maximum", ID, "\n"), yas = "Meetwaarde (°C)") + geom_hline(yintercept = 25, linewidth = 1, colour = "black", linetype = "dashed") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/Temp/", ID,"_Temp", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "T_veld", "Temperatuur Kalmthout (+ MKN maximum)", yas = "Meetwaarde (°C)") + 
+maak_plot_1var_loc(data, "T_veld", "Temperatuur Kalmthout (+ MKN maximum)\n", yas = "Meetwaarde (°C)") + 
   geom_hline(yintercept = 25, color = "black", linetype = "dashed", linewidth = 1)
 
 
@@ -646,14 +646,14 @@ Temp_max <- data %>%
 # SO4
 locaties <- unique(data$CODE)
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SO4" , paste("Sulfaat + MKN gemiddelde", ID), yas = "Meetwaarde (mg/L)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 15, linewidth = 1, colour = "black", linetype = "dashed")
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SO4" , paste("Sulfaat + MKN gemiddelde", ID, "\n"), yas = "Meetwaarde (mg/L)") + geom_hline(yintercept = 15, linewidth = 1, colour = "black", linetype = "dashed") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/SO4/", ID,"_SO4", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "SO4", "Sulfaat Kalmthout (+ MKN gemiddelde)", yas = "Meetwaarde (mg/L)") + 
+maak_plot_1var_loc(data, "SO4", "Sulfaat Kalmthout (+ MKN gemiddelde)", yas = "Meetwaarde (mg/L)") + 
   geom_hline(yintercept = 15, color = "black", linetype = "dashed", linewidth = 1)
 
 
@@ -661,7 +661,7 @@ maak_plot_1var(data, "SO4", "Sulfaat Kalmthout (+ MKN gemiddelde)", yas = "Meetw
 locaties <- unique(data$CODE)
 
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SO4_S" , paste("Sulfaat-S", ID), yas = "Meetwaarde (mg S/L)") +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SO4_S" , paste("Sulfaat-S", ID, "\n"), yas = "Meetwaarde (mg S/L)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
@@ -669,20 +669,20 @@ for (ID in locaties) {
 }
 
 
-maak_plot_1var(data %>% filter(CODE %in% "ANTKAL0384"), "SO4_S" , paste("Sulfaat-S", ID), yas = "Meetwaarde (mg S/L)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 15, linewidth = 1, colour = "black", linetype = "dashed")
+maak_plot_1var_loc(data, "SO4_S" , paste("Sulfaat-S", ID, "\n"), yas = "Meetwaarde (mg S/L)") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
 
 
 # EC25.VELD
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "EC25.VELD" , paste("Elektrische geleidbaarheid + MKN 90-percentiel", ID), yas = "Meetwaarde (µS/cm)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 100, linewidth = 1, colour = "black", linetype = "dashed")
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "EGV25_veld" , paste("Elektrische geleidbaarheid + MKN 90-percentiel", ID, "\n"), yas = "Meetwaarde (µS/cm)") + geom_hline(yintercept = 100, linewidth = 1, colour = "black", linetype = "dashed") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/EGV/", ID,"_EGV", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "EGV25_veld", "Elektrische geleidbaarheid (+ MKN 90-percentiel)", yas = "Meetwaarde (µS/cm)") + 
+maak_plot_1var_loc(data, "EGV25_veld", "Elektrische geleidbaarheid (+ MKN 90-percentiel)\n", yas = "Meetwaarde (µS/cm)") + 
   geom_hline(yintercept = 100, color = "black", linetype = "dashed", linewidth = 1)
 
 
@@ -695,13 +695,13 @@ data %>%
 
 # chloride
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "Cl" , paste("Chloride-concentratie + MKN 90-percentiel", ID), yas = "Meetwaarde (mg/L)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 20, linewidth = 1, colour = "black", linetype = "dashed")
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "Cl" , paste("Chloride-concentratie + MKN 90-percentiel", ID, "\n"), yas = "Meetwaarde (mg/L)") + geom_hline(yintercept = 20, linewidth = 1, colour = "black", linetype = "dashed") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/Cl/", ID,"_Cl", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
-maak_plot_1var(data, "Cl", "Chloride Kalmthout (+ MKN 90-percentiel)", yas = "Meetwaarde (mg/L)") + 
+maak_plot_1var_loc(data, "Cl", "Chloride Kalmthout (+ MKN 90-percentiel)\n", yas = "Meetwaarde (mg/L)") + 
   geom_hline(yintercept = 20, color = "black", linetype = "dashed", linewidth = 1)
 
 
