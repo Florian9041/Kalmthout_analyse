@@ -50,7 +50,9 @@ library(tidyverse)
 
 # data inlezen
 ```{r}
-data <- read.csv2("./data/AC_Kalmthout_ruwe_data_lang_2024-11-19.csv")
+data <- read.csv2("./data/FactResultAqua_bewerkt_2025-01-03.csv")
+# locatie van Kalmthout nog filteren!
+
 data$FieldSamplingDate <- as.Date(data$FieldSamplingDate, format = "%d/%m/%Y")
 data$ResultCalc <- as.numeric(data$ResultCalc)
 # verwijder data van voor 2023
