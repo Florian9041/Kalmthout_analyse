@@ -39,55 +39,44 @@ library(stringr)
 ```{r}
 data_KAL <- read.csv(file = "./data/FactResultAqua_bewerkt_2025-01-03.csv", sep = ";")
 data_naamgeving <- read_xlsx("./data/SWO_Kalmthout_vennencodes_toponiemen.xlsx")
+locaties_Kalmthout <- data_naamgeving$codeplas
 # Assuming 'date' is the column name for your dates
-data_KAL$FieldSamplingDate <- as.Date(data_KAL$FieldSamplingDate)
-data_KAL <- data_KAL %>% 
-  left_join(data_naamgeving[,c(1,2)], by = "codeplas")
+data_KAL$FieldSamplingDate <- as.Date(data_KAL$FieldSamplingDate, format = "%d/%m/%Y")
 
-locaties <- data_locaties$codeplas
-# gebruik locaties van TVG
-data_KAL <- data_KAL %>%
-  filter(codeplas %in% locaties)
+# filter locaties van Kalmthout
+data_KAL <- data_KAL %>% filter(!is.na(CODE)) %>% 
+  filter(codeplas %in% locaties_Kalmthout | CODE %in% data_naamgeving$CODE)
+# vervang ANTKAL0386 in codeplas door ANTKAL0386a of b (afh van CODE)
+data_KAL$codeplas[data_KAL$codeplas == "ANTKAL0386"] <- data_KAL$CODE[data_KAL$codeplas == "ANTKAL0386"]
+
+data_KAL <- data_KAL %>% left_join(data_naamgeving[,c(1,2,4)], by = "codeplas")
+
 unique(data_KAL$AquaComponent)
 data_KAL <- data_KAL[!is.na(data_KAL$AquaComponent),]
-data_KAL$FieldSamplingDate <- as.Date(data_KAL$FieldSamplingDate, format = "%Y-%m-%d")
 
 # M als eenheid omzetten naar m
 data_KAL$AquaUnit[data_KAL$AquaUnit == "M"] <- "m"
 data_KAL$Unit[data_KAL$Unit == "M"] <- "m"
+
+
+# meetreeksen visualiseren (2023-2024 en <2020)
+data_KAL %>%
+  ggplot(aes(x = FieldSamplingDate, y = codeplas)) +
+  geom_point(size = 1) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y")
 
 #habitattype <- data_KAL %>%
 #  select(codeplas, HabtypeVel) %>%
 #  unique() %>%
 #  write.csv2(file = "./exports/habitattype.csv")
 
-
-# verwijder data met geïsoleerde metingen in 2024 (1 / 2 metingen in 2024)
-data_KAL <- data_KAL %>%
-  mutate(FieldSamplingDate = as.Date(FieldSamplingDate)) %>%
-  group_by(codeplas) %>%
-  # Identify codeplas with 1 or 2 distinct dates in 2024
-  mutate(distinct_dates_2024 = n_distinct(FieldSamplingDate[year(FieldSamplingDate) == 2024])) %>%
-  ungroup() %>%
-  # Remove rows where the date is in 2024 and the codeplas has 1 or 2 distinct dates
-  filter(!(year(FieldSamplingDate) == 2024 & distinct_dates_2024 >= 1 & distinct_dates_2024 <= 2)) %>%
-  select(-distinct_dates_2024)  # Remove the helper column
-
-
-data_KAL <- data_KAL %>%
-  left_join(data_locaties[,c(2,7)], by = "codeplas")
-
+# voeg watertype + habtype toe als kolom
 data_KAL <- data_KAL %>%
   group_by(codeplas) %>%
   mutate(categorie = paste(watertype, 
                             str_extract(HabtypeVel, "^[^;,]+")))
 
 
-# voeg ResultCalc toe als kolom voor meetwaarden onder detectielimiet
-data_KAL <- data_KAL %>%
-  mutate(ResultCalc = ifelse(grepl("<", ResultFormatted), 
-                             as.numeric(gsub("<", "", ResultFormatted)) / 2, # als operator <, deel waarde door 2
-                             as.numeric(gsub(">", "", ResultFormatted)))) # als > of geen operator, neem waarde over
 # voeg label toe
 data_KAL <- data_KAL %>%
   mutate(label = paste0(AquaComponent, " (", AquaUnit, ")"))
@@ -106,15 +95,22 @@ data_KAL %>%
   geom_point(size = 1) +
     scale_x_date(date_breaks = "1 year", date_labels = "%Y")
   
-meetreeksen <- read.csv(file = "./data/Turnhouts Vennegebied MKN - Meetreeksen.csv", sep = ",")
-colnames(meetreeksen) <- c("codeplas", "2024", "2022-2023", "<2022", "<2022_jaar")
 # reeks van 2022-2024
-reeks_2022_2024 <- meetreeksen %>%
-  filter(`2024` == "ja" | `2022-2023` == "ja") %>% pull(codeplas)
+reeks_2022_2024 <- unique(data_KAL$codeplas[data_KAL$meetreeks == "2022-2024"])
 # historische metingen
-reeks_2020 <- meetreeksen %>%
-  filter(`<2022` == "ja") %>% pull(codeplas)
+reeks_2020 <- unique(data_KAL$codeplas[data_KAL$meetreeks == "<2020"])
 ```
+
+# Voeg RESULTCALC toe
+```{r}
+# voeg ResultCalc toe als kolom voor meetwaarden onder detectielimiet
+data_KAL_temp <- data_KAL %>%
+  mutate(ResultCalc = ifelse(grepl("<", ResultFormatted), 
+                             as.numeric(gsub("<", "", ResultFormatted)) / 2, # als operator <, deel waarde door 2
+                             as.numeric(gsub(">", "", ResultFormatted)))) # als > of geen operator, neem waarde over
+```
+
+
 
 ## Anorganische data berekenen
 ```{r}
