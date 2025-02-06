@@ -50,7 +50,9 @@ library(tidyverse)
 
 # data inlezen
 ```{r}
-data <- read.csv2("./data/AC_Kalmthout_ruwe_data_lang_2024-11-19.csv")
+data <- read.csv2("./data/FactResultAqua_bewerkt_2025-01-03.csv")
+# locatie van Kalmthout nog filteren!
+
 data$FieldSamplingDate <- as.Date(data$FieldSamplingDate, format = "%d/%m/%Y")
 data$ResultCalc <- as.numeric(data$ResultCalc)
 # verwijder data van voor 2023
@@ -61,6 +63,12 @@ data$AquaUnit[data$AquaUnit == "M"] <- "m"
 data$Unit[data$Unit == "M"] <- "m"
 data$label[data$label == "SD_veld (M)"] <- "SD_veld (m)"
 data$ResultCalc[data$AquaComponent == "SD_veld" & data$ResultCalc == 29] <- 0.29
+
+# vector met locaties
+locaties <- unique(data$CODE)
+
+# GIT code om alle veranderingen te aanvaarden
+## git add -A
 ```
 
 # componenten
@@ -89,10 +97,10 @@ for (Variabele in Componenten) {
   figuur <- ggplot(data_figuur,
                    aes(x = ResultCalc, y = FieldSampleID)) +
     geom_boxplot() +
-    labs(title = paste0("Kalmthout variabele ",data_figuur$label)) +
+    labs(title = paste0("Kalmthout variabele ",data_figuur$label, "\n")) +
     ylab("Locatie") + xlab(paste0("Meetwaarde (", data_figuur$AquaUnit ,")"))
   ggsave(figuur,
-         filename = paste0("./exports/boxplots/", "Kalmthout_",Variabele, "_bw",".jpg"))
+         filename = paste0("./exports/boxplots/", "Kalmthout_",Variabele, "_bw",".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 ```
 
@@ -154,8 +162,21 @@ maak_plot <- function(dataset, component, title = NULL, xas = NULL, yas = NULL){
   figuur
 }
 
-# plots genereren voor 1 variabele
+# plots genereren voor 1 variabele (voor 1 locatie)
 maak_plot_1var <- function(dataset, component, title = NULL, xas = "Datum staalname", yas = NULL){
+  figuur <- dataset %>%
+    filter(AquaComponent %in% component) %>%  
+    ggplot(aes(x = FieldSamplingDate, y = ResultCalc)) +
+    scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") + # visualiseert data per maand in format maand-jaar
+    scale_y_continuous(breaks = pretty_breaks(n = 10)) +
+    geom_line(linewidth = 1, color = "orange") +
+    geom_point(color = "orange") +
+    labs(title = title) + xlab(xas) + ylab(yas)
+  figuur
+}
+
+# voor 1 variabele voor alle locaties
+maak_plot_1var_loc <- function(dataset, component, title = NULL, xas = "Datum staalname", yas = NULL){
   figuur <- dataset %>%
     filter(AquaComponent %in% component) %>%  
     ggplot(aes(x = FieldSamplingDate, y = ResultCalc, color = CODE)) +
@@ -166,7 +187,6 @@ maak_plot_1var <- function(dataset, component, title = NULL, xas = "Datum staaln
     labs(title = title) + xlab(xas) + ylab(yas)
   figuur
 }
-
 ```
 
 # Abiotische bereiken 3160 (watertype Zm/Zs)
@@ -219,12 +239,10 @@ T.P_max %>%
 
 ```{r}
 # plot TP
-## AN_KAL_003
-maak_plot_1var(data %>% filter(CODE %in% "AN_KAL_003"), "T.P", "Totale fosfor", yas = "Meetwaarde (mg P/L)")
-maak_plot_1var(data, "TP", "Totale fosfor Kalmthout", yas = "Meetwaarde (mg P/L)")
+maak_plot_1var(data, "TP", "Totale fosfor Kalmthout\n", yas = "Meetwaarde (mg P/L)")
 
 # plot TN
-maak_plot_1var(data, "TN", "Totale stikstof Kalmthout", yas = "Meetwaarde (mg N/L)")
+maak_plot_1var(data, "TN", "Totale stikstof Kalmthout\n", yas = "Meetwaarde (mg N/L)")
 
 # plot anorganische stikstof
 maak_plot(data %>% filter(CODE %in% "AN_KAL_002"), c("NO3", "NO2", "NH4"), "Anorganische stikstof", yas = "Meetwaarde (mg/L)")
@@ -269,18 +287,18 @@ locaties <- unique(data$CODE)
 # voor totale fosfor per locatie figuur maken
 for (ID in locaties) {
   data_figuur <- data %>%
-    filter(CODE %in% ID & Component %in% "T.P")
+    filter(CODE %in% ID & Component %in% "TP")
   figuur <- ggplot(data_figuur,
                    aes(x = FieldSamplingDate, y = ResultCalc)) +
     geom_line(linewidth = 1, colour = "orange") +
-    labs(title = paste("Locatie",ID, " (+ MKN zomerhalfjaargemiddelde)")) + xlab("Datum staalname") + ylab("Meetwaarde (mg P/L)") +
+    labs(title = paste("Locatie",ID, " (+ MKN zomerhalfjaargemiddelde)\n")) + xlab("Datum staalname") + ylab("Meetwaarde (mg P/L)") +
     geom_hline(yintercept = 0.03)
   print(figuur)
 }
 
 # gebruik functie maak_plot_1var
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "T.P" , paste("Totale fosfor T.P", ID, "+ MKN Zomerhalfjaargemiddelde"), yas = "Meetwaarde (mg P/L)") + geom_hline(yintercept = 0.03, color = "black", linetype = "dashed", linewidth = 1) +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "TP" , paste("Totale fosfor TP", ID, "+ MKN Zomerhalfjaargemiddelde\n"), yas = "Meetwaarde (mg P/L)") + geom_hline(yintercept = 0.03, color = "black", linetype = "dashed", linewidth = 1) +
   scale_y_continuous(breaks = pretty_breaks(n = 10))
   print(figuur)
   ggsave(plot = figuur,
@@ -302,7 +320,7 @@ TP_zomerhalfjaargem <- data %>% filter(AquaComponent %in% "TP") %>%
 locaties <- unique(data$CODE)
 
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "T.N" , paste("Totale stikstof T.N", ID, "+ MKN Zomerhalfjaargemiddelde"), yas = "Meetwaarde (mg N/L)") + geom_hline(yintercept = 1.3, color = "black", linetype = "dashed", linewidth = 1) +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "TN" , paste("Totale stikstof TN", ID, "+ MKN Zomerhalfjaargemiddelde\n"), yas = "Meetwaarde (mg N/L)") + geom_hline(yintercept = 1.3, color = "black", linetype = "dashed", linewidth = 1) +
   scale_y_continuous(breaks = pretty_breaks(n = 10))
   print(figuur)
   ggsave(plot = figuur,
@@ -333,28 +351,8 @@ N_anorg$AquaUnit <- "mg N/l"
 N_anorg$Component <- "N_anorg"
 data_met_N_anorg <- bind_rows(data, N_anorg)
 
-write.csv(data_met_N_anorg, file = "./data/Data_Kalmthout_met_Nanorg.csv")
+#write.csv(data_met_N_anorg, file = "./data/Data_Kalmthout_met_Nanorg.csv")
 ```
-
-```{r}
-# herordenen van variabelen van groot > klein
-anorg_N_KAL0384 <- data %>%
-  filter(AquaComponent %in% c("NH4_N", "NO3_N", "NO2_N") & FieldSampleID == "ANTKAL0384")
-
-anorg_N_KAL0384$label <- factor(anorg_N_KAL0384$label, unique(anorg_N_KAL0384[order(anorg_N_KAL0384$ResultCalc, decreasing = T), "label"]))
-
-plot1 <- anorg_N_KAL0384 %>%
-  ggplot(aes(x = FieldSamplingDate, y = ResultCalc, fill = label)) +
-  geom_area(position = "identity", alpha = 0.6) +
-  scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
-  labs(title = "Anorganische stikstof (N_anorg = NH4_N + NO3_N + NO2_N)") +
-  xlab("Datum staalname") + 
-  ylab("Meetwaarde (mg N/L)")  + 
-  scale_fill_discrete("Variabelen") + scale_y_continuous(breaks = seq(0,2, by = 0.1))
-plot1
-
-```
-
 
 ```{r}
 # loop
@@ -371,7 +369,7 @@ for (ID in locaties) {
     ggplot(aes(x = FieldSamplingDate, y = ResultCalc, fill = label)) +
     geom_area(position = "identity", alpha = 0.6) +
     scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
-    labs(title = paste("Anorganische stikstof", ID ,"(N_anorg = NH4_N + NO3_N + NO2_N)")) +
+    labs(title = paste("Anorganische stikstof", ID ,"(N_anorg = NH4_N + NO3_N + NO2_N)\n")) +
     xlab("Datum staalname") + 
     ylab("Meetwaarde (mg N/L)")  + 
     scale_fill_discrete("Variabelen") + scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
@@ -384,38 +382,14 @@ for (ID in locaties) {
 
 ### Nu met N_anorg erbij
 ```{r}
-# loop
-locaties <- unique(data$CODE)
-for (ID in locaties) {
-  # subset voor locatie
-  N_anorg_ID <- data_met_N_anorg %>%
-  filter(AquaComponent %in% c("NH4_N", "NO3_N", "NO2_N", "N_anorg") & CODE == ID)
-  
-  # orden van klein naar groot
-  N_anorg_ID$label <- factor(N_anorg_ID$label, unique(N_anorg_ID[order(N_anorg_ID$ResultCalc, decreasing = T), "label"]))
-  # plot figuur
-  figuur <- N_anorg_ID %>%
-    ggplot(aes(x = FieldSamplingDate, y = ResultCalc, fill = label)) +
-    geom_area(position = "identity", alpha = 0.6) +
-    scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
-    labs(title = paste("Anorganische stikstof", ID ,"(N_anorg = NH4_N + NO3_N + NO2_N)")) +
-    xlab("Datum staalname") + 
-    ylab("Meetwaarde (mg N/L)")  + 
-    scale_fill_discrete("Variabelen") + scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
-  print(figuur)
-  ggsave(plot = figuur,
-         filename = paste0("./exports/N_anorg(2)/", ID,"_N_anorg2", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
-}
-
-
 data %>%
   filter(AquaComponent %in% "NO2_N") %>%
   group_by(CODE) %>%
   summarise(NO3_N_gem = mean(ResultCalc))
 
-maak_plot_1var(data, "NH4_N", "Ammonium-stikstof Kalmthout", yas = "Meetwaarde (mg N/L)")
-maak_plot_1var(data, "NO3_N", "Nitraat-stikstof Kalmthout", yas = "Meetwaarde (mg N/L)")
-maak_plot_1var(data, "NO2_N", "Nitriet-stikstof Kalmthout", yas = "Meetwaarde (mg N/L)")
+maak_plot_1var(data, "NH4_N", "Ammonium-stikstof Kalmthout\n", yas = "Meetwaarde (mg N/L)")
+maak_plot_1var(data, "NO3_N", "Nitraat-stikstof Kalmthout\n", yas = "Meetwaarde (mg N/L)")
+maak_plot_1var(data, "NO2_N", "Nitriet-stikstof Kalmthout\n", yas = "Meetwaarde (mg N/L)")
 
 data %>%
   filter(AquaComponent %in% "NH3" & AquaUnit %in% "mg/L") %>%
@@ -441,7 +415,7 @@ for (ID in locaties) {
     ggplot(aes(x = FieldSamplingDate, y = ResultCalc, fill = label)) +
     geom_area(position = "identity", alpha = 0.6) +
     scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
-    labs(title = paste("Organische stikstof", ID ,"(N_org = TN - N_anorg)")) +
+    labs(title = paste("Organische stikstof", ID ,"(N_org = TN - N_anorg)\n")) +
     xlab("Datum staalname") + 
     ylab("Meetwaarde (mg N/L)")  + 
     scale_fill_discrete("Variabelen") + scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
@@ -454,14 +428,20 @@ for (ID in locaties) {
 
 ## Zuurtegraad
 ```{r}
+locaties <- unique(data$CODE)
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "pH.VELD" , paste("Zuurtegraad", ID, "+ MKN minimum & maximum"), yas = "Meetwaarde (pH)") + geom_hline(yintercept = 4.5, color = "black", linetype = "dashed", linewidth = 1) +
-    geom_hline(yintercept = 6.5, color = "black", linetype = "dashed", linewidth = 1) +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "pH_veld" , paste("Zuurtegraad", ID, "+ Van Calster minimum & maximum\n"), yas = "Meetwaarde (pH)") + geom_hline(yintercept = 4.5, color = "black", linetype = "dashed", linewidth = 1) +
+    geom_hline(yintercept = 5.5, color = "black", linetype = "dashed", linewidth = 1) +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/pH/", ID,"_pH", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
+maak_plot_1var_loc(data, "pH_veld", "Zuurtegraad\n", yas = "Meetwaarde") +
+  geom_hline(yintercept = 4.5, color = "black", linetype = "dashed", linewidth = 1) +
+    geom_hline(yintercept = 5.5, color = "black", linetype = "dashed", linewidth = 1)
+  
+
 
 # toetsing MKN-normen
 pH_bereik <- data %>%
@@ -472,10 +452,26 @@ pH_bereik <- data %>%
             bereik = paste0(min(ResultCalc), " - ", max(ResultCalc)))
 write.csv(pH_bereik, file = "./exports/pH_bereik.csv")
 
-maak_plot_1var(data, "pH_veld", "Zuurtegraad Kalmthout (MKN minimum - maximum)", yas = "Meetwaarde (pH)") + geom_hline(yintercept = 4.5, color = "black", linetype = "dashed", linewidth = 1) +
-    geom_hline(yintercept = 6.5, color = "black", linetype = "dashed", linewidth = 1)
 ```
 
+## Waterdiepte
+```{r}
+data %>% 
+  filter(AquaComponent %in% c("WD_veld", "SD_veld") & months(FieldSamplingDate, FALSE) %in% month.name[c(4:9)], ) %>% 
+  group_by(CODE, AquaComponent) %>% 
+  summarise(zomerhalfjaargem = mean(ResultCalc)) %>%
+  pivot_wider(names_from = AquaComponent, values_from = zomerhalfjaargem) %>%
+  write.csv(file = "./exports/WD_SD_zhj.csv")
+
+# boxplots met waterdiepte en secchi-diepte
+data %>%
+  filter(AquaComponent %in% c("WD_veld", "SD_veld")) %>%
+  ggplot(aes(x = ResultCalc, y = CODE, color = AquaComponent)) +
+  geom_boxplot() +
+  scale_color_discrete("Variabele", labels = c("Secchi-diepte", "Waterdiepte")) +
+  ylab("Locatie") + xlab("Meetwaarde (m)") +
+  ggtitle("Doorzicht en waterdiepte locaties Kalmthout\n")
+```
 
 ## Helderheid (chlorofyl, zwevende stof, secchi)
 ```{r}
@@ -483,7 +479,7 @@ locaties <- unique(data$CODE)
 
 # humuszuren (absorptie_440)
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "absorptie_440" , paste("Absorptie_440", ID), yas = "Meetwaarde (ABS)") +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "absorptie_440" , paste("Absorptie_440", ID, "\n"), yas = "Meetwaarde (ABS)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
@@ -495,18 +491,18 @@ data %>% filter(AquaComponent %in% "absorptie_440") %>%
   summarise(abs440_gem = mean(ResultCalc)) %>%
   write.csv(file = "./exports/abs440_gem.csv")
 
-maak_plot_1var(data, "absorptie_440", "Absorptie (440 nm)", yas = "Meetwaarde (ABS)")
+maak_plot_1var_loc(data, "absorptie_440", "Absorptie (440 nm)\n", yas = "Meetwaarde (ABS)")
 
 # chlorofyl-a
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "CHL.A" , paste("Chlorofyl-a", ID), yas = "Meetwaarde (µg/L)") +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "chl_a" , paste("Chlorofyl-a", ID, "\n"), yas = "Meetwaarde (µg/L)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/CHL_A/", ID,"_CHL_A", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "chl_a", "chlorofyl-a Kalmthout", yas = "Meetwaarde (µg/L)")
+maak_plot_1var_loc(data, "chl_a", "chlorofyl-a Kalmthout\n", yas = "Meetwaarde (µg/L)")
 
 ## zomerhalfjaargemiddelde chl_a voor KRW-norm
 data %>%
@@ -518,18 +514,18 @@ data %>%
 
 # zwevende stof
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "ZS_105" , paste("Zwevende stof (105°C)", ID), yas = "Meetwaarde (g/L)") +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "ZS_105" , paste("Zwevende stof (105°C)", ID, "\n"), yas = "Meetwaarde (g/L)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/ZS105/", ID,"_ZS105", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "ZS_105", "Zwevende stof (105°C) Kalmthout", yas = "Meetwaarde (g/L)")
+maak_plot_1var_loc(data, "ZS_105", "Zwevende stof (105°C) Kalmthout\n", yas = "Meetwaarde (g/L)")
 
 ## zwevende stof ZS550 - ZS105
 for (ID in locaties) {
-  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("ZS_105", "ZS_550") , paste("Zwevende stof (550 & 105°C)", ID), yas = "Meetwaarde (g/L)") +
+  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("ZS_105", "ZS_550") , paste("Zwevende stof (550 & 105°C)", ID, "\n"), yas = "Meetwaarde (g/L)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
@@ -547,36 +543,36 @@ data %>% filter(AquaComponent %in% "ZS_550") %>%
   write.csv(file = "./exports/ZS_550_gem.csv")
 
 
-# secchi-diepte
+# secchi- en waterdiepte
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SD_veld" , paste("Secchi-diepte", ID, "(+ MKN  zomerhalfjaargemiddelde)"), yas = "Meetwaarde (m)") +
+  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("SD_veld", "WD_veld") , paste("Secchi- en waterdiepte", ID, "(+ MKN  zomerhalfjaargemiddelde)\n"), yas = "Meetwaarde (m)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) +
     geom_hline(yintercept = 0.9, color = "black", linetype = "dashed", linewidth = 1)
   print(figuur)
   ggsave(plot = figuur,
-         filename = paste0("./exports/Secchi/", ID,"_Secchi", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
+         filename = paste0("./exports/Secchi_WD/", ID,"_Secchi_WD", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
-maak_plot_1var(data, "SD_veld", "Secchi-diepte Kalmthout (+ MKN Zomerhalfjaargemiddelde)", yas = "Meetwaarde (m)") + 
+maak_plot_1var_loc(data, "SD_veld", "Secchi-diepte Kalmthout (+ MKN Zomerhalfjaargemiddelde)\n", yas = "Meetwaarde (m)") + 
   geom_hline(yintercept = 0.9, color = "black", linetype = "dashed", linewidth = 1)
-
-# humuszuren (absorptie_440)
-for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "absorptie_440" , paste("Absorptie_440", ID), yas = "Meetwaarde (ABS)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
-  print(figuur)
-  ggsave(plot = figuur,
-         filename = paste0("./exports/abs_440/", ID,"_abs_440", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
-}
+maak_plot_1var_loc(data, "WD_veld", "Waterdiepte Kalmthout\n", yas = "Meetwaarde (m)")
 
 # combinatie chl_a, SD_veld, ZS105, abs440
 for (ID in locaties){
-  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("absorptie_440", "ZS_105", "SD_veld", "chl_a"), paste("Helderheid", ID), yas = "Meetwaarde (log10)") +
+  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("absorptie_440", "ZS_105", "SD_veld", "chl_a"), paste("Helderheid", ID, "\n"), yas = "Meetwaarde (log10)") +
     scale_y_log10()
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/helderheid/", ID, "helderheid", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
+# combinatie pH & absorptie
+for (ID in locaties){
+  figuur <- maak_plot(data %>% filter(CODE %in% ID), c("absorptie_440", "pH_veld"), paste("Zuurtegraad & absorptie (440 nm)", ID, "\n"), yas = "Meetwaarde (log10)") +
+    scale_y_log10()
+  print(figuur)
+  ggsave(plot = figuur,
+         filename = paste0("./exports/pH_abs/", ID, "pH_abs", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
+}
 
 # toetsing MKN-norm
 SD_zomerhalfjaargem <- data %>% filter(AquaComponent %in% "SD_veld") %>%
@@ -592,14 +588,14 @@ SD_zomerhalfjaargem <- data %>% filter(AquaComponent %in% "SD_veld") %>%
 ```{r}
 # concentratie
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "O2_veld" , paste("Zuurstof-concentratie + MKN 10-percentiel", ID), yas = "Meetwaarde (mg/L)") +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "O2_veld" , paste("Zuurstof-concentratie + MKN 10-percentiel", ID, "\n"), yas = "Meetwaarde (mg/L)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 6, linewidth = 1, colour = "black", linetype = "dashed")
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/O2_conc/", ID,"_O2c", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "O2_veld", "Zuurstofconcentratie Kalmthout (+ MKN 10-percentiel)", yas = "Meetwaarde (mg/L)") + 
+maak_plot_1var_loc(data, "O2_veld", "Zuurstofconcentratie Kalmthout (+ MKN 10-percentiel)\n", yas = "Meetwaarde (mg/L)") + 
   geom_hline(yintercept = 6, color = "black", linetype = "dashed", linewidth = 1)
 
 # toetsing MKN-normen
@@ -611,14 +607,14 @@ data %>%
 
 # verzadiging
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SAT.VELD" , paste("Zuurstof-verzadiging + MKN maximum", ID), yas = "Meetwaarde (%)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 120, linewidth = 1, colour = "black", linetype = "dashed")
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "O2verz" , paste("Zuurstof-verzadiging + MKN maximum", ID, "\n"), yas = "Meetwaarde (%)") + geom_hline(yintercept = 120, linewidth = 1, colour = "black", linetype = "dashed") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/O2_verz/", ID,"_O2v", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "O2verz", "Zuurstofverzadiging Kalmthout (+ MKN maximum)", yas = "Meetwaarde (%)") + 
+maak_plot_1var_loc(data, "O2verz", "Zuurstofverzadiging Kalmthout (+ MKN maximum)\n", yas = "Meetwaarde (%)") + 
   geom_hline(yintercept = 120, color = "black", linetype = "dashed", linewidth = 1)
 
 # toetsing MKN-normen
@@ -633,14 +629,14 @@ data %>%
 ## Temperatuur
 ```{r}
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "TEMP.VELD" , paste("Temperatuur + MKN maximum", ID), yas = "Meetwaarde (°C)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 25, linewidth = 1, colour = "black", linetype = "dashed")
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "T_veld" , paste("Temperatuur + MKN maximum", ID, "\n"), yas = "Meetwaarde (°C)") + geom_hline(yintercept = 25, linewidth = 1, colour = "black", linetype = "dashed") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/Temp/", ID,"_Temp", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "T_veld", "Temperatuur Kalmthout (+ MKN maximum)", yas = "Meetwaarde (°C)") + 
+maak_plot_1var_loc(data, "T_veld", "Temperatuur Kalmthout (+ MKN maximum)\n", yas = "Meetwaarde (°C)") + 
   geom_hline(yintercept = 25, color = "black", linetype = "dashed", linewidth = 1)
 
 
@@ -657,14 +653,14 @@ Temp_max <- data %>%
 # SO4
 locaties <- unique(data$CODE)
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SO4" , paste("Sulfaat + MKN gemiddelde", ID), yas = "Meetwaarde (mg/L)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 15, linewidth = 1, colour = "black", linetype = "dashed")
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SO4" , paste("Sulfaat + MKN gemiddelde", ID, "\n"), yas = "Meetwaarde (mg/L)") + geom_hline(yintercept = 15, linewidth = 1, colour = "black", linetype = "dashed") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/SO4/", ID,"_SO4", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "SO4", "Sulfaat Kalmthout (+ MKN gemiddelde)", yas = "Meetwaarde (mg/L)") + 
+maak_plot_1var_loc(data, "SO4", "Sulfaat Kalmthout (+ MKN gemiddelde)\n", yas = "Meetwaarde (mg/L)") + 
   geom_hline(yintercept = 15, color = "black", linetype = "dashed", linewidth = 1)
 
 
@@ -672,7 +668,7 @@ maak_plot_1var(data, "SO4", "Sulfaat Kalmthout (+ MKN gemiddelde)", yas = "Meetw
 locaties <- unique(data$CODE)
 
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SO4_S" , paste("Sulfaat-S", ID), yas = "Meetwaarde (mg S/L)") +
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "SO4_S" , paste("Sulfaat-S", ID, "\n"), yas = "Meetwaarde (mg S/L)") +
   scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
@@ -680,20 +676,20 @@ for (ID in locaties) {
 }
 
 
-maak_plot_1var(data %>% filter(CODE %in% "ANTKAL0384"), "SO4_S" , paste("Sulfaat-S", ID), yas = "Meetwaarde (mg S/L)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 15, linewidth = 1, colour = "black", linetype = "dashed")
+maak_plot_1var_loc(data, "SO4_S" , paste("Sulfaat-S", ID, "\n"), yas = "Meetwaarde (mg S/L)") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
 
 
 # EC25.VELD
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "EC25.VELD" , paste("Elektrische geleidbaarheid + MKN 90-percentiel", ID), yas = "Meetwaarde (µS/cm)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 100, linewidth = 1, colour = "black", linetype = "dashed")
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "EGV25_veld" , paste("Elektrische geleidbaarheid + MKN 90-percentiel", ID, "\n"), yas = "Meetwaarde (µS/cm)") + geom_hline(yintercept = 100, linewidth = 1, colour = "black", linetype = "dashed") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/EGV/", ID,"_EGV", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
 
-maak_plot_1var(data, "EGV25_veld", "Elektrische geleidbaarheid (+ MKN 90-percentiel)", yas = "Meetwaarde (µS/cm)") + 
+maak_plot_1var_loc(data, "EGV25_veld", "Elektrische geleidbaarheid (+ MKN 90-percentiel)\n", yas = "Meetwaarde (µS/cm)") + 
   geom_hline(yintercept = 100, color = "black", linetype = "dashed", linewidth = 1)
 
 
@@ -706,13 +702,13 @@ data %>%
 
 # chloride
 for (ID in locaties) {
-  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "Cl" , paste("Chloride-concentratie + MKN 90-percentiel", ID), yas = "Meetwaarde (mg/L)") +
-  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10)) + geom_hline(yintercept = 20, linewidth = 1, colour = "black", linetype = "dashed")
+  figuur <- maak_plot_1var(data %>% filter(CODE %in% ID), "Cl" , paste("Chloride-concentratie + MKN 90-percentiel", ID, "\n"), yas = "Meetwaarde (mg/L)") + geom_hline(yintercept = 20, linewidth = 1, colour = "black", linetype = "dashed") +
+  scale_y_continuous(breaks = pretty_breaks(n = 10, min.n = 10))
   print(figuur)
   ggsave(plot = figuur,
          filename = paste0("./exports/Cl/", ID,"_Cl", ".jpg"), width = 1080, height = 720, units = "px", scale = 3)
 }
-maak_plot_1var(data, "Cl", "Chloride Kalmthout (+ MKN 90-percentiel)", yas = "Meetwaarde (mg/L)") + 
+maak_plot_1var_loc(data, "Cl", "Chloride Kalmthout (+ MKN 90-percentiel)\n", yas = "Meetwaarde (mg/L)") + 
   geom_hline(yintercept = 20, color = "black", linetype = "dashed", linewidth = 1)
 
 
@@ -990,7 +986,7 @@ p1 <- ggplot(ref_punten, aes(x = ec25_ref, y = ir_ref, label = name_ref)) +
   xlab("EGV (µS/cm)") + 
   ylab("IR (%)") + 
   scale_y_continuous(breaks = seq(0,1, by = 0.1)) + 
-  ggtitle("IR-EGV diagram Kalmthout") + 
+  ggtitle("IR-EGV diagram Kalmthout\n") + 
   geom_text(hjust = - 0.5, vjust = - 0.5)
 # voeg locaties Kalmthout toe
 p1 + geom_point(data = IREGVwide, mapping = aes(x = EC25.VELD, y = IR), color = "red")
