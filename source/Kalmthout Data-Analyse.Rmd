@@ -132,10 +132,16 @@ N_anorg <- N_anorg %>%
            format(FieldSamplingDate, "%m")) %in% c(4:9) ~ "zomer",
            TRUE ~ "winter"))
 data_met_N_anorg <- bind_rows(data_KAL, N_anorg)
+
+# voeg namen en watertype van plassen toe vanuit data_naamgeving met codeplas als sleutel
 data_met_N_anorg <- data_met_N_anorg %>%
-  left_join(data_locaties[,c(2,7)], by = "codeplas")
-data_met_N_anorg <- data_met_N_anorg %>% 
-  rename(watertype = watertype.y)
+  left_join(data_naamgeving %>% select(codeplas, naam, watertype), by = "codeplas") %>%
+  mutate(
+    naam = coalesce(naam.y, naam.x),
+    watertype = coalesce(watertype.y, watertype.x)
+  ) %>%
+  select(-ends_with(".y"), -ends_with(".x"))
+
 write.csv2(data_met_N_anorg, file = "./data/Data_Kalmthout_met_Nanorg.csv")
 ```
 
