@@ -110,6 +110,8 @@ data_KAL$ResultCalc <- ifelse(
   as.numeric(gsub(",", ".", data_KAL$ResultFormattedNumeric))
 )
 
+# verander colom "naam" naar "Locatie" (voor functies)
+colnames(data_KAL)[28] <- "Locatie"
 ```
 
 
@@ -141,6 +143,9 @@ data_met_N_anorg <- data_met_N_anorg %>%
     watertype = coalesce(watertype.y, watertype.x)
   ) %>%
   select(-ends_with(".y"), -ends_with(".x"))
+
+colnames(data_met_N_anorg)[32] <- "Locatie"
+
 
 write.csv2(data_met_N_anorg, file = "./data/Data_Kalmthout_met_Nanorg.csv")
 ```
@@ -224,17 +229,18 @@ create_boxplot <- function(data_KAL, AquaComponent, vline, xlab) {
 
   return(final_plot)
 }
-# voormaximum
+
+# voor maximum
 create_boxplot_max <- function(data_KAL, AquaComponent, vline, xlab) {
   # Calculate median values for sorting
-  median_values <- data_KAL %>%
+  max_values <- data_KAL %>%
     filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
     group_by(codeplas, watertype) %>%
     summarise(max = max(ResultCalc, na.rm = TRUE), .groups = "drop") %>%
     arrange(max)  # Sort in ascending order
   
   # Create a factor level for codeplas based on sorted median values
-  codeplas_order <- median_values$codeplas
+  codeplas_order <- max_values$codeplas
   
   # Create the main plot
   plot <- data_KAL %>%
@@ -274,14 +280,14 @@ create_boxplot_max <- function(data_KAL, AquaComponent, vline, xlab) {
 # voor p90
 create_boxplot_p90 <- function(data_KAL, AquaComponent, vline, xlab) {
   # Calculate median values for sorting
-  median_values <- data_KAL %>%
+  p90_values <- data_KAL %>%
     filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
     group_by(codeplas, watertype) %>%
     summarise(p90 = quantile(ResultCalc, probs = 0.9, na.rm = TRUE), .groups = "drop") %>%
     arrange(p90)  # Sort in ascending order
   
   # Create a factor level for codeplas based on sorted median values
-  codeplas_order <- median_values$codeplas
+  codeplas_order <- p90_values$codeplas
   
   # Create the main plot
   plot <- data_KAL %>%
@@ -599,21 +605,22 @@ create_boxplot_basiclog_max <- function(data_KAL, AquaComponent, xlab) {
 ```{r}
 # chloride
 vline_Cl <- data.frame(
-  watertype = c("Aw-om", "Cb", "Czb", "Zm", "Zs"),
-  xintercept = c(140, 70, 50, 20, 20)
+  watertype = c("Zm", "Zs"),
+  xintercept <- 20
 )
+
 create_boxplot_p90(data_KAL, "Cl", vline_Cl, "Chloride-concentratie (mg/l)")
 
 # elektrische geleidbaarheid
 vline_EGV <- data.frame(
-  watertype = c("Aw-om", "Cb", "Czb", "Zm", "Zs"),
-  xintercept = c(750, 350, 350, 100, 100)
+  watertype = c("Zm", "Zs"),
+  xintercept <- 100
 )
 create_boxplot_p90(data_KAL, "EGV25_veld", vline_EGV, "Elektrische geleidbaarheid (µS/cm)")
 
 # temperatuur
 vline_Temp <- data.frame(
-  watertype = c("Aw-om", "Cb", "Czb", "Zm", "Zs"),
+  watertype = c("Zm", "Zs"),
   xintercept <- 25
 )
 create_boxplot_max(data_KAL, "T_veld", vline_Temp, "Temperatuur (°C)")
