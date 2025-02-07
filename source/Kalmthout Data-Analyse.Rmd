@@ -104,18 +104,11 @@ reeks_2020 <- unique(data_KAL$codeplas[data_KAL$meetreeks == "<2020"])
 # Voeg RESULTCALC toe
 ```{r}
 # voeg ResultCalc toe als kolom voor meetwaarden onder detectielimiet
-data_KAL_temp <- data_KAL %>%
-  mutate(ResultCalc = ifelse(grepl("<", ResultFormatted), 
-                             as.numeric(gsub("<", "", ResultFormatted)) / 2, # als operator <, deel waarde door 2
-                             as.numeric(gsub(">", "", ResultFormatted)))) # als > of geen operator, neem waarde over
-
-data_KAL_temp <- data_KAL %>%
-  mutate(ResultCalc = case_when(
-    AquaComponent %in% c("SO4_S", "NH4_N") ~ as.numeric(ResultFormattedNumeric),
-    grepl("<", ResultFormatted) ~ as.numeric(gsub("<", "", ResultFormatted)) / 2,
-    TRUE ~ as.numeric(gsub(">", "", ResultFormatted))
-  ))
-
+data_KAL$ResultCalc <- ifelse(
+  grepl("<|>", data_KAL$ResultFormatted),
+  as.numeric(gsub(",", ".", data_KAL$ResultFormattedNumeric)) / 2,
+  as.numeric(gsub(",", ".", data_KAL$ResultFormattedNumeric))
+)
 
 ```
 
