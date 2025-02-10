@@ -939,7 +939,8 @@ plot <- data_KAL %>%
              linetype = "solid", size = 1) +
   geom_vline(data = vline_pH, aes(xintercept = xinterceptmax, colour = watertype), 
              linetype = "solid", size = 1) + 
-  xlab("Zuurtegraad - pH")
+  xlab("Zuurtegraad - pH") +
+  scale_x_continuous(breaks = pretty_breaks(n = 10))
 
 # Create a dataset for labels
 labels_data <- data_KAL %>%
@@ -967,12 +968,12 @@ plot +
 ## Boxplots Secchi-diepte en waterdiepte
 ```{r}
 vline_SD <- data.frame(
-  watertype = c("Aw-om", "Cb", "Czb", "Zm", "Zs"),
+  watertype = c("Zm", "Zs"),
   xintercept = 0.9
 )
 
 data_SD_WD <- data_KAL %>% 
-  filter(AquaComponent %in% c("SD_veld", "WD_veld") & meetreeks == "2022-2024") %>%
+  filter(AquaComponent %in% c("SD_veld", "WD_veld") & meetreeks == "2022-2024" & seizoen == "zomer") %>%
   group_by(codeplas, AquaComponent) %>%
   mutate(gemiddelde = mean(ResultCalc, na.rm = TRUE)) %>%
   ungroup() %>%
