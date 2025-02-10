@@ -144,7 +144,10 @@ data_met_N_anorg <- data_met_N_anorg %>%
   ) %>%
   select(-ends_with(".y"), -ends_with(".x"))
 
-colnames(data_met_N_anorg)[32] <- "Locatie"
+data_met_N_anorg = subset(data_met_N_anorg, select = -c(27) )
+
+# verander naam naar Locatie voor functies
+colnames(data_met_N_anorg)[colnames(data_met_N_anorg) == "naam"] <- "Locatie"
 
 
 write.csv2(data_met_N_anorg, file = "./data/Data_Kalmthout_met_Nanorg.csv")
@@ -204,7 +207,8 @@ create_boxplot <- function(data_KAL, AquaComponent, vline, xlab) {
     facet_grid(watertype ~ ., scales = "free", space = "free_y") +
     geom_vline(data = vline, aes(xintercept = xintercept, colour = watertype), 
                linetype = "solid", size = 1) +
-    xlab(xlab)
+    xlab(xlab) +
+    scale_x_continuous(breaks = pretty_breaks(n = 10))
 
   # Create a dataset for labels
   labels_data <- data_KAL %>%
@@ -251,7 +255,8 @@ create_boxplot_max <- function(data_KAL, AquaComponent, vline, xlab) {
     facet_grid(watertype ~ ., scales = "free", space = "free_y") +
     geom_vline(data = vline, aes(xintercept = xintercept, colour = watertype), 
                linetype = "solid", size = 1) +
-    xlab(xlab)
+    xlab(xlab) +
+    scale_x_continuous(breaks = pretty_breaks(n = 10))
 
   # Create a dataset for labels
   labels_data <- data_KAL %>%
@@ -298,7 +303,8 @@ create_boxplot_p90 <- function(data_KAL, AquaComponent, vline, xlab) {
     facet_grid(watertype ~ ., scales = "free", space = "free_y") +
     geom_vline(data = vline, aes(xintercept = xintercept, colour = watertype), 
                linetype = "solid", size = 1) +
-    xlab(xlab)
+    xlab(xlab) +
+    scale_x_continuous(breaks = pretty_breaks(n = 10))
 
   # Create a dataset for labels
   labels_data <- data_KAL %>%
@@ -441,7 +447,8 @@ create_boxplot_basic <- function(data_KAL, AquaComponent, xlab) {
     ggplot(aes(x = ResultCalc, y = codeplas, colour = watertype)) +
     geom_boxplot() +
     facet_grid(watertype ~ ., scales = "free", space = "free_y") +
-    xlab(xlab)
+    xlab(xlab) +
+    scale_x_continuous(breaks = pretty_breaks(n = 10))
 
   # Create a dataset for labels
   labels_data <- data_KAL %>%
@@ -485,7 +492,8 @@ create_boxplot_basic_max <- function(data_KAL, AquaComponent, xlab) {
     ggplot(aes(x = ResultCalc, y = codeplas, colour = watertype)) +
     geom_boxplot() +
     facet_grid(watertype ~ ., scales = "free", space = "free_y") +
-    xlab(xlab)
+    xlab(xlab) +
+    scale_x_continuous(breaks = pretty_breaks(n = 10))
 
   # Create a dataset for labels
   labels_data <- data_KAL %>%
@@ -601,6 +609,201 @@ create_boxplot_basiclog_max <- function(data_KAL, AquaComponent, xlab) {
 }
 ```
 
+## Boxplots N_anorg
+```{r}
+create_boxplot_N_anorg <- function(data_met_N_anorg, AquaComponent, vline, xlab) {
+  # Calculate median values for sorting
+  median_values <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    group_by(codeplas, watertype) %>%
+    summarise(median = median(ResultCalc, na.rm = TRUE), .groups = "drop") %>%
+    arrange(median)  # Sort in ascending order
+  
+  # Create a factor level for codeplas based on sorted median values
+  codeplas_order <- median_values$codeplas
+  
+  # Create the main plot
+  plot <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    mutate(codeplas = factor(codeplas, levels = codeplas_order)) %>%  # Set factor levels
+    ggplot(aes(x = ResultCalc, y = codeplas, colour = watertype)) +
+    geom_boxplot() +
+    facet_grid(watertype ~ ., scales = "free", space = "free_y") +
+    geom_vline(data = vline, aes(xintercept = xintercept, colour = watertype), 
+               linetype = "solid", size = 1) +
+    xlab(xlab) +
+    scale_x_continuous(breaks = pretty_breaks(n = 10))
+
+  # Create a dataset for labels
+  labels_data <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    group_by(watertype, codeplas) %>%
+    summarise(Locatie = first(Locatie), .groups = "drop") %>%
+    mutate(codeplas = factor(codeplas, levels = codeplas_order),  # Set factor levels
+           x_pos = Inf)  # Position labels at the right edge of the plot
+
+  # Add labels to the plot
+  final_plot <- plot + 
+    geom_text(data = labels_data, 
+              aes(x = x_pos, y = codeplas, label = Locatie),
+              hjust = 1,  # Right-align the text
+              vjust = 0.5,  # Center-align vertically
+              size = 3.5,  # Adjust text size as needed
+              colour = "black") +  # Set label color
+    theme(
+      legend.position = "none",
+      axis.title.y = element_blank()
+    )
+
+  return(final_plot)
+}
+
+# voor maximum
+create_boxplot_N_anorg_max <- function(data_met_N_anorg, AquaComponent, vline, xlab) {
+  # Calculate median values for sorting
+  max_values <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    group_by(codeplas, watertype) %>%
+    summarise(max = max(ResultCalc, na.rm = TRUE), .groups = "drop") %>%
+    arrange(max)  # Sort in ascending order
+  
+  # Create a factor level for codeplas based on sorted median values
+  codeplas_order <- max_values$codeplas
+  
+  # Create the main plot
+  plot <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    mutate(codeplas = factor(codeplas, levels = codeplas_order)) %>%  # Set factor levels
+    ggplot(aes(x = ResultCalc, y = codeplas, colour = watertype)) +
+    geom_boxplot() +
+    facet_grid(watertype ~ ., scales = "free", space = "free_y") +
+    geom_vline(data = vline, aes(xintercept = xintercept, colour = watertype), 
+               linetype = "solid", size = 1) +
+    xlab(xlab) +
+    scale_x_continuous(breaks = pretty_breaks(n = 10))
+
+  # Create a dataset for labels
+  labels_data <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    group_by(watertype, codeplas) %>%
+    summarise(Locatie = first(Locatie), .groups = "drop") %>%
+    mutate(codeplas = factor(codeplas, levels = codeplas_order),  # Set factor levels
+           x_pos = Inf)  # Position labels at the right edge of the plot
+
+  # Add labels to the plot
+  final_plot <- plot + 
+    geom_text(data = labels_data, 
+              aes(x = x_pos, y = codeplas, label = Locatie),
+              hjust = 1,  # Right-align the text
+              vjust = 0.5,  # Center-align vertically
+              size = 3.5,  # Adjust text size as needed
+              colour = "black") +  # Set label color
+    theme(
+      legend.position = "none",
+      axis.title.y = element_blank()
+    )
+
+  return(final_plot)
+}
+
+# voor p90
+create_boxplot_N_anorg_p90 <- function(data_met_N_anorg, AquaComponent, vline, xlab) {
+  # Calculate median values for sorting
+  p90_values <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    group_by(codeplas, watertype) %>%
+    summarise(p90 = quantile(ResultCalc, probs = 0.9, na.rm = TRUE), .groups = "drop") %>%
+    arrange(p90)  # Sort in ascending order
+  
+  # Create a factor level for codeplas based on sorted median values
+  codeplas_order <- p90_values$codeplas
+  
+  # Create the main plot
+  plot <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    mutate(codeplas = factor(codeplas, levels = codeplas_order)) %>%  # Set factor levels
+    ggplot(aes(x = ResultCalc, y = codeplas, colour = watertype)) +
+    geom_boxplot() +
+    facet_grid(watertype ~ ., scales = "free", space = "free_y") +
+    geom_vline(data = vline, aes(xintercept = xintercept, colour = watertype), 
+               linetype = "solid", size = 1) +
+    xlab(xlab) +
+    scale_x_continuous(breaks = pretty_breaks(n = 10))
+
+  # Create a dataset for labels
+  labels_data <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    group_by(watertype, codeplas) %>%
+    summarise(Locatie = first(Locatie), .groups = "drop") %>%
+    mutate(codeplas = factor(codeplas, levels = codeplas_order),  # Set factor levels
+           x_pos = Inf)  # Position labels at the right edge of the plot
+
+  # Add labels to the plot
+  final_plot <- plot + 
+    geom_text(data = labels_data, 
+              aes(x = x_pos, y = codeplas, label = Locatie),
+              hjust = 1,  # Right-align the text
+              vjust = 0.5,  # Center-align vertically
+              size = 3.5,  # Adjust text size as needed
+              colour = "black") +  # Set label color
+    theme(
+      legend.position = "none",
+      axis.title.y = element_blank()
+    )
+
+  return(final_plot)
+}
+
+# Logaritmisch
+create_boxplot_N_anorg_log <- function(data_met_N_anorg, AquaComponent, vline, xlab) {
+  # Calculate median values for sorting
+  median_values <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    group_by(codeplas, watertype) %>%
+    summarise(median = median(ResultCalc, na.rm = TRUE), .groups = "drop") %>%
+    arrange(median)  # Sort in ascending order
+  
+  # Create a factor level for codeplas based on sorted median values
+  codeplas_order <- median_values$codeplas
+  
+  # Create the main plot
+  plot <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    mutate(codeplas = factor(codeplas, levels = codeplas_order)) %>%  # Set factor levels
+    ggplot(aes(x = log10(ResultCalc), y = codeplas, colour = watertype)) +
+    geom_boxplot() +
+    facet_grid(watertype ~ ., scales = "free", space = "free_y") +
+    geom_vline(data = vline, aes(xintercept = log10(xintercept), colour = watertype), 
+               linetype = "solid", size = 1) +
+    xlab(xlab) +
+    scale_x_continuous(breaks = pretty_breaks(n = 10))
+
+  # Create a dataset for labels
+  labels_data <- data_met_N_anorg %>%
+    filter(AquaComponent == !!AquaComponent & meetreeks == "2022-2024") %>%
+    group_by(watertype, codeplas) %>%
+    summarise(Locatie = first(Locatie), .groups = "drop") %>%
+    mutate(codeplas = factor(codeplas, levels = codeplas_order),  # Set factor levels
+           x_pos = Inf)  # Position labels at the right edge of the plot
+
+  # Add labels to the plot
+  final_plot <- plot + 
+    geom_text(data = labels_data, 
+              aes(x = x_pos, y = codeplas, label = Locatie),
+              hjust = 1,  # Right-align the text
+              vjust = 0.5,  # Center-align vertically
+              size = 3.5,  # Adjust text size as needed
+              colour = "black") +  # Set label color
+    theme(
+      legend.position = "none",
+      axis.title.y = element_blank()
+    )
+
+  return(final_plot)
+}
+```
+
+
 ## Boxplots
 ```{r}
 # chloride
@@ -627,22 +830,21 @@ create_boxplot_max(data_KAL, "T_veld", vline_Temp, "Temperatuur (°C)")
 
 # zuurstofconcentratie
 vline_O2c <- data.frame(
-  watertype = c("Aw-om", "Cb", "Czb", "Zm", "Zs"),
+  watertype = c("Zm", "Zs"),
   xintercept <- 6
 )
 create_boxplot(data_KAL, "O2_veld", vline_O2c, "Zuurstofconcentratie (mg/l)")
 
-
 # zuurstofverzadiging
 vline_O2v <- data.frame(
-  watertype = c("Aw-om", "Cb", "Czb", "Zm", "Zs"),
+  watertype = c("Zm", "Zs"),
   xintercept <- 120
 )
 create_boxplot_max(data_KAL, "O2verz", vline_O2v, "Zuurstofverzadiging (%)")
 
 # chlorofyl-a
 vline_chla <- data.frame(
-  watertype = c("Aw-om", "Cb", "Czb", "Zm", "Zs"),
+  watertype = c("Zm", "Zs"),
   xintercept <- 10
 )
 create_boxplot(data_KAL, "chl_a", vline_chla, "Chlorofyl_a (µg/l)")
@@ -650,24 +852,23 @@ create_boxplot_log(data_KAL, "chl_a", vline_chla, "Chlorofyl_a (log10 µg/l)")
 
 # Sulfaat
 vline_SO4 <- data.frame(
-  watertype = c("Aw-om", "Cb", "Czb", "Zm", "Zs"),
-  xintercept = c(100, 50, 40, 15, 15)
+  watertype = c("Zm", "Zs"),
+  xintercept = c(15, 15)
 )
 create_boxplot(data_KAL, "SO4", vline_SO4, "Sulfaat-concentratie (mg/l)")
-create_boxplot_log(data_KAL, "SO4", vline_SO4, "Sulfaat-concentratie (log10 mg/l)")
 
 # Totale stikstof TN
 vline_TN <- data.frame(
-  watertype = c("Aw-om", "Cb", "Czb", "Zm", "Zs"),
-  xintercept = c(1, 1.3, 1.3, 1.3, 1.3)
+  watertype = c("Zm", "Zs"),
+  xintercept = c(1.3, 1.3)
 )
 create_boxplot(data_KAL %>% filter(seizoen == "zomer"), "TN", vline_TN, "Totale stikstof (mg N/l)")
 create_boxplot_log(data_KAL %>% filter(seizoen == "zomer"), "TN", vline_TN, "Totale stikstof (log10 mg N/l)")
 
 # Totale fosfor TP
 vline_TP <- data.frame(
-  watertype = c("Aw-om", "Cb", "Czb", "Zm", "Zs"),
-  xintercept = c(0.04, 0.04, 0.03, 0.03, 0.03)
+  watertype = c("Zm", "Zs"),
+  xintercept = c(0.03, 0.03)
 )
 create_boxplot(data_KAL %>% filter(seizoen == "zomer"), "TP", vline_TP, "Totale fosfor (mg P/l)")
 create_boxplot_log(data_KAL %>% filter(seizoen == "zomer"), "TP", vline_TP, "Totale fosfor (log10 mg P/l)")
@@ -699,11 +900,11 @@ create_boxplot_basiclog_max(data_KAL, "NO2_N", "NO2_N (log10 mg N/l)")
 
 # Anorganische stikstof
 vline_N_anorg <- data.frame(
-  watertype = c("Aw-om", "Cb", "Czb", "Zm", "Zs"),
+  watertype = c("Zm", "Zs"),
   xintercept <- 0.14
 )
-create_boxplot(data_met_N_anorg, "N_anorg", vline_N_anorg, "Anorganische stikstof (mg N/l)")
-create_boxplot_log_max(data_met_N_anorg, "N_anorg", vline_N_anorg, "Anorganische stikstof (log10 mg N/l)")
+create_boxplot_N_anorg(data_met_N_anorg, "N_anorg", vline_N_anorg, "Anorganische stikstof (mg N/l)")
+create_boxplot_N_anorg_log(data_met_N_anorg, "N_anorg", vline_N_anorg, "Anorganische stikstof (log10 mg N/l)")
 
 
 ```
