@@ -14,8 +14,6 @@ opts_chunk$set(
   cache = FALSE, 
   autodep = TRUE,
   dpi = 300,
-  fig.width = 150 / 25.4,
-  fig.height = 100 / 25.4,
   warning = TRUE,
   error = TRUE,
   message = TRUE
@@ -1044,46 +1042,6 @@ create_boxplot_basiclog(data_KAL, "alkaliniteit", "Alkaliniteit (log10 meq/l)")
 
 # TIJDSREEKSEN
 ## functie voor tijdsreeksen
-```{r}
-generate_plot <- function(codeplas_value, aqua_component, watertype_thresholds, y_label = NULL) {
-  filtered_data <- data_KAL %>%
-    filter(AquaComponent == aqua_component & meetreeks == "2022-2024" & codeplas == codeplas_value)
-  
-  n_results <- nrow(filtered_data)
-  interval <- if(n_results > 12) "2 months" else "1 month"
-  
-  watertype <- unique(filtered_data$watertype)
-  threshold <- watertype_thresholds[[watertype]] %||% NA # Use NA if not found
-  
-  # If y_label is not provided, use "ResultCalc" as default
-  y_axis_label <- if(is.null(y_label)) "ResultCalc" else y_label
-  
-  plot <- filtered_data %>%
-    ggplot(aes(x = FieldSamplingDate, y = ResultCalc)) +
-    scale_x_date(date_breaks = interval, date_labels = "%m/%y") +
-    scale_y_continuous(breaks = pretty_breaks(n = 10)) +
-    geom_line(linewidth = 1, color = "orange") +
-    geom_point(color = "orange") +
-    geom_hline(yintercept = threshold, linetype = "dashed", color = "black", size = 1) +
-    labs(x = "Datum staalname",
-         y = y_axis_label) +
-  theme(
-    axis.title = element_text(size = 16),
-    axis.text = element_text(size = 14)
-  )
-    
-  
-  return(plot)
-}
-
-generate_multiple_plots <- function(codeplas_values, aqua_component, watertype_thresholds, y_label = NULL) {
-  plots <- map(codeplas_values, ~generate_plot(.x, aqua_component, watertype_thresholds, y_label))
-  names(plots) <- codeplas_values
-  return(plots)
-}
-
-```
-
 ### voor 2020
 ```{r}
 generate_plot <- function(codeplas_value, aqua_component, watertype_thresholds, y_label = NULL) {
@@ -1129,9 +1087,6 @@ generate_multiple_plots <- function(codeplas_values, aqua_component, watertype_t
 ```{r}
 # Chloride
 grenswaarden_Cl <- list(
-  "Aw-om" = 140, 
-  "Cb" = 70, 
-  "Czb" = 50, 
   "Zm" = 20, 
   "Zs" = 20
 )
@@ -1142,9 +1097,49 @@ walk2(plots_Cl2020, names(plots_Cl2020),
 
 ```
 
+### voor 2024
+```{r}
+generate_plot <- function(codeplas_value, aqua_component, watertype_thresholds, y_label = NULL) {
+  filtered_data <- data_KAL %>%
+    filter(AquaComponent == aqua_component & meetreeks == "2022-2024" & codeplas == codeplas_value)
+  
+  n_results <- nrow(filtered_data)
+  interval <- if(n_results > 12) "2 months" else "1 month"
+  
+  watertype <- unique(filtered_data$watertype)
+  threshold <- watertype_thresholds[[watertype]] %||% NA # Use NA if not found
+  
+  # If y_label is not provided, use "ResultCalc" as default
+  y_axis_label <- if(is.null(y_label)) "ResultCalc" else y_label
+  
+  plot <- filtered_data %>%
+    ggplot(aes(x = FieldSamplingDate, y = ResultCalc)) +
+    scale_x_date(date_breaks = interval, date_labels = "%m/%y") +
+    scale_y_continuous(breaks = pretty_breaks(n = 10)) +
+    geom_line(linewidth = 1, color = "orange") +
+    geom_point(color = "orange") +
+    geom_hline(yintercept = threshold, linetype = "dashed", color = "black", size = 1) +
+    labs(x = "Datum staalname",
+         y = y_axis_label) +
+  theme(
+    axis.title = element_text(size = 16),
+    axis.text = element_text(size = 14)
+  )
+    
+  
+  return(plot)
+}
+
+generate_multiple_plots <- function(codeplas_values, aqua_component, watertype_thresholds, y_label = NULL) {
+  plots <- map(codeplas_values, ~generate_plot(.x, aqua_component, watertype_thresholds, y_label))
+  names(plots) <- codeplas_values
+  return(plots)
+}
+
+```
 
 
-## functie voor tijdsreeksen zonder grenswaarde
+#### functie voor tijdsreeksen zonder grenswaarde
 ```{r}
 generate_plot_nohline <- function(codeplas_value, aqua_component, y_label = NULL) {
   filtered_data <- data_KAL %>%
@@ -1181,7 +1176,7 @@ generate_multiple_plots_nohline <- function(codeplas_values, aqua_component, y_l
 
 ```
 
-## code voor 2 variabelen te plotten (vb WD en SD, ZS105 en ZS550)
+#### code voor 2 variabelen te plotten (vb WD en SD, ZS105 en ZS550)
 ```{r}
 generate_plot_2 <- function(codeplas_value, aqua_component1, aqua_component2, watertype_thresholds, y_label = NULL) {
   filtered_data1 <- data_KAL %>%
@@ -1267,7 +1262,7 @@ generate_multiple_plots_2_nohline <- function(codeplas_values, aqua_component1, 
 }
 ```
 
-## functie tijdsreeks met 2 variabelen op 1 figuur
+#### functie tijdsreeks met 2 variabelen op 1 figuur
 ```{r}
 generate_plot_two_components <- function(codeplas_value, aqua_component1, aqua_component2, y_label1 = NULL, y_label2 = NULL) {
   filtered_data1 <- data_KAL %>%
@@ -1318,7 +1313,7 @@ generate_multiple_plots_two_components <- function(codeplas_values, aqua_compone
 
 ```
 
-## tijdreeksen 2 variabelen
+#### tijdreeksen 2 variabelen
 ```{r}
 # Zuurtegraad en absorptie
 plots_pH_abs <- generate_multiple_plots_two_components(reeks_2022_2024, "pH_veld", "absorptie_440", "Zuurtegraad - pH", "Absorptie (440nm ABS)")
@@ -1335,7 +1330,7 @@ walk2(plots_chla_abs, names(plots_chla_abs),
 ```
 
 
-## tijdreeksen opstellen voor variabelen
+### tijdreeksen opstellen voor variabelen
 ```{r}
 # Chloride
 grenswaarden_Cl <- list(
