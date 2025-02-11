@@ -1044,7 +1044,7 @@ create_boxplot_basiclog(data_KAL, "alkaliniteit", "Alkaliniteit (log10 meq/l)")
 ## functie voor tijdsreeksen
 ### voor 2020
 ```{r}
-generate_plot <- function(codeplas_value, aqua_component, watertype_thresholds, y_label = NULL) {
+generate_plot_2020 <- function(codeplas_value, aqua_component, watertype_thresholds, y_label = NULL) {
   filtered_data <- data_KAL %>%
     filter(AquaComponent == aqua_component & meetreeks == "<2020" & codeplas == codeplas_value)
   
@@ -1075,12 +1075,11 @@ generate_plot <- function(codeplas_value, aqua_component, watertype_thresholds, 
   return(plot)
 }
 
-generate_multiple_plots <- function(codeplas_values, aqua_component, watertype_thresholds, y_label = NULL) {
-  plots <- map(codeplas_values, ~generate_plot(.x, aqua_component, watertype_thresholds, y_label))
+generate_multiple_plots_2020 <- function(codeplas_values, aqua_component, watertype_thresholds, y_label = NULL) {
+  plots <- map(codeplas_values, ~generate_plot_2020(.x, aqua_component, watertype_thresholds, y_label))
   names(plots) <- codeplas_values
   return(plots)
 }
-
 
 ```
 
@@ -1091,7 +1090,7 @@ grenswaarden_Cl <- list(
   "Zs" = 20
 )
 
-plots_Cl2020 <- generate_multiple_plots(reeks_2022_2024, "Cl", grenswaarden_Cl, "Chloride (mg/l)")
+plots_Cl2020 <- generate_multiple_plots_2020(reeks_2020, "Cl", grenswaarden_Cl, "Chloride (mg/l)")
 walk2(plots_Cl2020, names(plots_Cl2020),
       ~ggsave(filename = paste0("./exports/Chloride2020/", .y, "_", "Cl2020", ".png"), plot = .x, width = 10, height = 6))
 
