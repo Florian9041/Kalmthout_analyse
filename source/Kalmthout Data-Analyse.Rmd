@@ -1296,21 +1296,6 @@ generate_multiple_plots_minmax <- function(codeplas_values, aqua_component, peri
   names(plots) <- codeplas_values
   return(plots)
 }
-
-
-
-# pH thresholds
-grenswaarden_pH <- list(
-  "Aw-om" = list(min = 6.5, max = 8.5),
-  "Cb" = list(min = 6.5, max = 8.5),
-  "Czb" = list(min = 6.5, max = 8.5),
-  "Zm" = list(min = 5.5, max = 8.5),
-  "Zs" = list(min = 5.5, max = 8.5)
-)
-
-plots_pH <- generate_multiple_plots_minmax(reeks_2020, "pH_veld", "<2020", grenswaarden_pH, "pH")
-walk2(plots_pH, names(plots_pH),
-      ~ggsave(filename = paste0("./exports/pH/", .y, "_", "pH", ".png"), plot = .x, width = 10, height = 6))
 ```
 
 
@@ -1327,6 +1312,18 @@ walk2(plots_Cl2020, names(plots_Cl2020),
       ~ggsave(filename = paste0("./exports/Chloride2020/", .y, "_", "Cl2020", ".png"), plot = .x, width = 10, height = 6))
 
 
+# pH
+grenswaarden_pH <- list(
+  "Aw-om" = list(min = 6.5, max = 8.5),
+  "Cb" = list(min = 6.5, max = 8.5),
+  "Czb" = list(min = 6.5, max = 8.5),
+  "Zm" = list(min = 5.5, max = 8.5),
+  "Zs" = list(min = 5.5, max = 8.5)
+)
+
+plots_pH <- generate_multiple_plots_minmax(reeks_2020, "pH_veld", "<2020", grenswaarden_pH)
+walk2(plots_pH, names(plots_pH),
+      ~ggsave(filename = paste0("./exports/pH/", .y, "_", "pH", ".png"), plot = .x, width = 10, height = 6))
 ```
 
 # FIGUREN 2022-2024
