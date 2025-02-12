@@ -1057,7 +1057,8 @@ generate_plot <- function(codeplas_value, aqua_component, periode, y_label = NUL
     theme(
       axis.title = element_text(size = 16),
       axis.text = element_text(size = 14),
-      axis.title.x = element_blank()
+      axis.title.x = element_blank(),
+      legend.position="none"
     )
   
   if (!is.na(threshold)) {
@@ -1241,7 +1242,7 @@ walk2(plot_test, names(plot_test),
 
 ```
 
-## FUNCTIE onder- en bovengrens
+## FUNCTIE onder- en bovengrens (pH, alkaliniteit e.d.)
 ```{r}
 generate_plot_minmax <- function(codeplas_value, aqua_component, periode, grenswaarden_pH, y_label = NULL) {
   # Filter data
@@ -1301,43 +1302,147 @@ generate_multiple_plots_minmax <- function(codeplas_values, aqua_component, peri
 
 # FIGUREN < 2020
 ```{r}
+# absorptie
+plots_abs2020 <- generate_multiple_plots(reeks_2020, "absorptie_440", "<2020", y_label = "Absorptie 440 nm (ABS)")
+walk2(plots_abs2020, names(plots_abs2020),
+      ~ggsave(filename = paste0("./exports/Absorptie2020/", .y, "_", "abs2020", ".png"), plot = .x, width = 10, height = 6))
+
+# absorptie en chlorofyl_a
+plot_abs_pH2020 <- generate_multiple_plots_2Yaxes(reeks_2020, "absorptie_440", "chl_a", "<2020", y_label1 = "Absorptie 440 nm (ABS)", y_label2 = "Chlorofyl_a (µg/l)")
+walk2(plot_abs_pH2020, names(plot_abs_pH2020),
+      ~ggsave(filename = paste0("./exports/absorptie_chlorofyl2020/", .y, "_", "abs_chla2020", ".png"), plot = .x, width = 10, height = 6))
+
+
 # Chloride
 grenswaarden_Cl <- list(
   "Zm" = 20, 
   "Zs" = 20
 )
 
-plots_Cl2020 <- generate_multiple_plots(reeks_2020, "Cl", "<2020", y_label = "Chloride (mg/l)", watertype_thresholds = grenswaarden_Cl)
+plots_Cl2020 <- generate_multiple_plots(reeks_2020, "Cl", "<2020", watertype_thresholds = grenswaarden_Cl)
 walk2(plots_Cl2020, names(plots_Cl2020),
       ~ggsave(filename = paste0("./exports/Chloride2020/", .y, "_", "Cl2020", ".png"), plot = .x, width = 10, height = 6))
 
+# Elektrische geleidbaarheid
+grenswaarden_EGV <- list(
+  "Aw-om" = 750, 
+  "Cb" = 350, 
+  "Czb" = 250, 
+  "Zm" = 100, 
+  "Zs" = 100
+)
+
+plots_EGV2020 <- generate_multiple_plots(reeks_2020, "EGV25_veld", "<2020", watertype_thresholds = grenswaarden_EGV)
+walk2(plots_EGV2020, names(plots_EGV2020),
+      ~ggsave(filename = paste0("./exports/Elektrische_geleidbaarheid2020/", .y, "_", "EGV2020", ".png"), plot = .x, width = 10, height = 6))
+
+# Zuurstofconcentratie
+grenswaarden_O2c <- list(
+  "Zm" = 6,
+  "Zs" = 6
+)
+
+plots_O2c2020 <- generate_multiple_plots(reeks_2020, "O2_veld", "<2020", watertype_thresholds = grenswaarden_O2c)
+walk2(plots_O2c2020, names(plots_O2c2020),
+      ~ggsave(filename = paste0("./exports/Zuurstofconcentratie2020/", .y, "_", "O2c2020", ".png"), plot = .x, width = 10, height = 6))
+
+# Zuurstofverzadiging
+grenswaarden_O2v <- list(
+  "Zm" = 120,
+  "Zs" = 120
+)
+
+plots_O2v2020 <- generate_multiple_plots(reeks_2020, "O2verz", "<2020", watertype_thresholds = grenswaarden_O2v)
+walk2(plots_O2v2020, names(plots_O2v2020),
+      ~ggsave(filename = paste0("./exports/Zuurstofverzadiging2020/", .y, "_", "O2v2020", ".png"), plot = .x, width = 10, height = 6))
 
 # pH
 grenswaarden_pH <- list(
   "Aw-om" = list(min = 6.5, max = 8.5),
-  "Cb" = list(min = 6.5, max = 8.5),
-  "Czb" = list(min = 6.5, max = 8.5),
-  "Zm" = list(min = 5.5, max = 8.5),
-  "Zs" = list(min = 5.5, max = 8.5)
+  "Cb" = list(min = 5.5, max = 7.5),
+  "Czb" = list(min = 5.5, max = 7.5),
+  "Zm" = list(min = 4.5, max = 6.5),
+  "Zs" = list(min = 4.5, max = 6.5)
 )
 
-plots_pH <- generate_multiple_plots_minmax(reeks_2020, "pH_veld", "<2020", grenswaarden_pH)
-walk2(plots_pH, names(plots_pH),
-      ~ggsave(filename = paste0("./exports/pH/", .y, "_", "pH", ".png"), plot = .x, width = 10, height = 6))
+plots_pH2020 <- generate_multiple_plots_minmax(reeks_2020, "pH_veld", "<2020", grenswaarden_pH)
+walk2(plots_pH2020, names(plots_pH2020),
+      ~ggsave(filename = paste0("./exports/pH2020/", .y, "_", "pH2020", ".png"), plot = .x, width = 10, height = 6))
+ 
+
+# N_anorganisch en componenten met geom_area()
+plot_stikstoffen20 <- generate_multiple_plots_multi(reeks_2020, c("NH4_N", "NO3_N", "NO2_N", "N_anorg"), "<2020", "mg N/l")
+walk2(plot_stikstoffen20, names(plot_stikstoffen20),
+      ~ggsave(filename = paste0("./exports/N_anorg_componenten2020/", .y, "_", "N_anorg_componenten2020", ".png"), plot = .x, width = 10, height = 6))
+
 ```
+
 
 # FIGUREN 2022-2024
 ```{r}
-# pH thresholds
-grenswaarden_pH <- list(
-  "Aw-om" = list(min = 6.5, max = 8.5),
-  "Cb" = list(min = 6.5, max = 8.5),
-  "Czb" = list(min = 6.5, max = 8.5),
-  "Zm" = list(min = 5.5, max = 8.5),
-  "Zs" = list(min = 5.5, max = 8.5)
+# absorptie
+plots_abs <- generate_multiple_plots(reeks_2022_2024, "absorptie_440", "2022-2024", y_label = "Absorptie 440 nm (ABS)")
+walk2(plots_abs, names(plots_abs),
+      ~ggsave(filename = paste0("./exports/Absorptie/", .y, "_", "abs", ".png"), plot = .x, width = 10, height = 6))
+
+# absorptie en chlorofyl_a
+plot_abs_pH <- generate_multiple_plots_2Yaxes(reeks_2022_2024, "absorptie_440", "chl_a", "2022-2024", y_label1 = "Absorptie 440 nm (ABS)", y_label2 = "Chlorofyl_a (µg/l)")
+walk2(plot_abs_pH, names(plot_abs_pH),
+      ~ggsave(filename = paste0("./exports/absorptie_chlorofyl/", .y, "_", "abs_chla", ".png"), plot = .x, width = 10, height = 6))
+
+# Chloride
+grenswaarden_Cl <- list(
+  "Zm" = 20, 
+  "Zs" = 20
 )
 
-plots_pH <- generate_multiple_plots(reeks_2022_2024, "pH_veld", grenswaarden_pH, "pH")
+plots_Cl <- generate_multiple_plots(reeks_2022_2024, "Cl", "2022-2024", watertype_thresholds = grenswaarden_Cl)
+walk2(plots_Cl, names(plots_Cl),
+      ~ggsave(filename = paste0("./exports/Chloride/", .y, "_", "Cl", ".png"), plot = .x, width = 10, height = 6))
+
+# Elektrische geleidbaarheid
+grenswaarden_EGV <- list(
+  "Aw-om" = 750, 
+  "Cb" = 350, 
+  "Czb" = 250, 
+  "Zm" = 100, 
+  "Zs" = 100
+)
+
+plots_EGV <- generate_multiple_plots(reeks_2022_2024, "EGV25_veld", "2022-2024", watertype_thresholds = grenswaarden_EGV)
+walk2(plots_EGV, names(plots_EGV),
+      ~ggsave(filename = paste0("./exports/Elektrische_geleidbaarheid/", .y, "_", "EGV", ".png"), plot = .x, width = 10, height = 6))
+
+# Zuurstofconcentratie
+grenswaarden_O2c <- list(
+  "Zm" = 6,
+  "Zs" = 6
+)
+
+plots_O2c <- generate_multiple_plots(reeks_2022_2024, "O2_veld", "2022-2024", watertype_thresholds = grenswaarden_O2c)
+walk2(plots_O2c, names(plots_O2c),
+      ~ggsave(filename = paste0("./exports/Zuurstofconcentratie/", .y, "_", "O2c", ".png"), plot = .x, width = 10, height = 6))
+
+# Zuurstofverzadiging
+grenswaarden_O2v <- list(
+  "Zm" = 120,
+  "Zs" = 120
+)
+
+plots_O2v <- generate_multiple_plots(reeks_2022_2024, "O2verz", "2022-2024", watertype_thresholds = grenswaarden_O2v)
+walk2(plots_O2v, names(plots_O2v),
+      ~ggsave(filename = paste0("./exports/Zuurstofverzadiging/", .y, "_", "O2v", ".png"), plot = .x, width = 10, height = 6))
+
+# pH 
+grenswaarden_pH <- list(
+  "Aw-om" = list(min = 6.5, max = 8.5),
+  "Cb" = list(min = 5.5, max = 7.5),
+  "Czb" = list(min = 5.5, max = 7.5),
+  "Zm" = list(min = 4.5, max = 6.5),
+  "Zs" = list(min = 4.5, max = 6.5)
+)
+
+plots_pH <- generate_multiple_plots_minmax(reeks_2022_2024, "pH_veld", "2022-2024", grenswaarden_pH)
 walk2(plots_pH, names(plots_pH),
       ~ggsave(filename = paste0("./exports/pH/", .y, "_", "pH", ".png"), plot = .x, width = 10, height = 6))
 ```
@@ -1542,10 +1647,10 @@ generate_multiple_plots_pH <- function(codeplas_values, aqua_component, watertyp
 # pH thresholds
 grenswaarden_pH <- list(
   "Aw-om" = list(min = 6.5, max = 8.5),
-  "Cb" = list(min = 6.5, max = 8.5),
-  "Czb" = list(min = 6.5, max = 8.5),
-  "Zm" = list(min = 5.5, max = 8.5),
-  "Zs" = list(min = 5.5, max = 8.5)
+  "Cb" = list(min = 6.5, max = 7.5),
+  "Czb" = list(min = 6.5, max = 7.5),
+  "Zm" = list(min = 5.5, max = 6.5),
+  "Zs" = list(min = 5.5, max = 6.5)
 )
 
 plots_pH <- generate_multiple_plots_pH(reeks_2022_2024, "pH_veld", grenswaarden_pH, "pH")
