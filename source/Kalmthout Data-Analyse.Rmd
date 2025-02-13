@@ -80,6 +80,12 @@ data_KAL <- data_KAL %>%
            format(FieldSamplingDate, "%m")) %in% c(4:9) ~ "zomer",
            TRUE ~ "winter"))
 
+# meetreeksen
+#data_KAL %>%
+#  ggplot(aes(x = FieldSamplingDate, y = codeplas, colour = meetreeks)) +
+#  geom_point(size = 1) +
+#    scale_x_date(date_breaks = "1 year", date_labels = "%Y")
+
   
 # reeks van 2022-2024
 reeks_2022_2024 <- unique(data_KAL$codeplas[data_KAL$meetreeks == "2022-2024"])
@@ -2690,8 +2696,13 @@ maucha(ionenwide22_24)
 ### Maucha-diagram per locatie (figuur per maand)
 #### Tijdsreeks 2024 Maak dataset aan voor locatie x
 ```{r}
-# "ANTTUR0299" "ANTTUR0297" "ANTTUR0292" "ANTTUR0282" "ANTRAV0014"
-locatie <- "ANTRAV0014"
+#""  ""  ""  ""  ""  
+#""  ""  ""  ""  ""  "" 
+#""  ""  ""  ""  ""  ""  
+#""  ""  ""  "" ""
+#""  ""  ""  ""  "" 
+
+locatie <- "ANTKAL0217"
 
 
 datamaucha <- data_KAL %>%
