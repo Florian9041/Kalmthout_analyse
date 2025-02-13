@@ -1206,6 +1206,16 @@ generate_plot_multi <- function(codeplas_value, aqua_components, periode, y_labe
   filtered_data <- data_KAL %>%
     filter(AquaComponent %in% aqua_components & periode == meetreeks & codeplas == codeplas_value)
   
+  # Calculate average values for each AquaComponent
+  avg_values <- filtered_data %>%
+    group_by(AquaComponent) %>%
+    summarize(avg_value = mean(ResultCalc, na.rm = TRUE)) %>%
+    arrange(desc(avg_value))  # Arrange in descending order
+  
+  # Reorder the AquaComponent factor based on average values
+  filtered_data$AquaComponent <- factor(filtered_data$AquaComponent, 
+                                        levels = avg_values$AquaComponent)
+  
   n_results <- nrow(filtered_data)
   interval <- if (n_results > 12) "2 months" else "1 month"
   
@@ -1234,11 +1244,6 @@ generate_multiple_plots_multi <- function(codeplas_values, aqua_components, peri
   names(plots) <- codeplas_values
   return(plots)
 }
-
-
-plot_test <- generate_multiple_plots_multi(reeks_2020, c("NH4_N", "NO3_N", "NO2_N", "N_anorg"), "<2020", "mg N/l")
-walk2(plot_test, names(plot_test),
-      ~ggsave(filename = paste0("./test/N_multi/", .y, "_", "N_multi", ".png"), plot = .x, width = 10, height = 6))
 
 ```
 
@@ -1369,11 +1374,100 @@ plots_pH2020 <- generate_multiple_plots_minmax(reeks_2020, "pH_veld", "<2020", g
 walk2(plots_pH2020, names(plots_pH2020),
       ~ggsave(filename = paste0("./exports/pH2020/", .y, "_", "pH2020", ".png"), plot = .x, width = 10, height = 6))
  
+# waterdiepte en secchi-diepte
+grenswaarden_SD <- list(
+  "Aw-om" = 1.8, 
+  "Cb" = 0.9, 
+  "Czb" = 0.9, 
+  "Zm" = 0.9, 
+  "Zs" = 0.9
+)
 
-# N_anorganisch en componenten met geom_area()
+plots_SD_WD_2020 <- generate_multiple_plots_2(reeks_2020, "SD_veld", "WD_veld", "<2020", "Meetwaarde (m)")
+walk2(plots_SD_WD_2020, names(plots_SD_WD_2020),
+      ~ggsave(filename = paste0("./exports/SD_WD_2020/", .y, "_", "SD_WD_2020", ".png"), plot = .x, width = 10, height = 6))
+
+# SO4 - Sulfaat
+grenswaarden_SO4 <- list(
+  "Aw-om" = 100, 
+  "Cb" = 50, 
+  "Czb" = 40, 
+  "Zm" = 15, 
+  "Zs" = 15
+)
+
+plots_SO4_2020 <- generate_multiple_plots(reeks_2020, "SO4", "<2020", watertype_thresholds = grenswaarden_SO4, y_label = "Sulfaat (mg/l)")
+walk2(plots_SO4_2020, names(plots_SO4_2020),
+      ~ggsave(filename = paste0("./exports/SO4_2020/", .y, "_", "SO4_2020", ".png"), plot = .x, width = 10, height = 6))
+
+# Temperatuur
+grenswaarden_T <- list(
+  "Zm" = 25, 
+  "Zs" = 25
+)
+
+plots_T2020 <- generate_multiple_plots(reeks_2020, "T_veld", "<2020", watertype_thresholds = grenswaarden_T, y_label = "Temperatuur (°C)")
+walk2(plots_T2020, names(plots_T2020),
+      ~ggsave(filename = paste0("./exports/Temperatuur2020/", .y, "_", "Temp2020", ".png"), plot = .x, width = 10, height = 6))
+
+
+# PO4_P
+plots_PO4_P2020 <- generate_multiple_plots(reeks_2020, "PO4_P", "<2020", y_label = "Orthofosfaat PO4_P (mg P/l)")
+walk2(plots_PO4_P2020, names(plots_PO4_P2020),
+      ~ggsave(filename = paste0("./exports/PO4_P_Orthofosfaat_2020/", .y, "_", "PO4_P_2020", ".png"), plot = .x, width = 10, height = 6))
+
+# Totale stikstof - TN
+grenswaarden_TN <- list(
+  "Zm" = 1.3,
+  "Zs" = 1.3
+)
+
+plots_TN2020 <- generate_multiple_plots(reeks_2020, "TN", "<2020", watertype_thresholds = grenswaarden_TN, y_label = "Totale stikstof (mg N/l)")
+walk2(plots_TN2020, names(plots_TN2020),
+      ~ggsave(filename = paste0("./exports/TN2020/", .y, "_", "TN2020", ".png"), plot = .x, width = 10, height = 6))
+
+# Totale fosfor - TP
+grenswaarden_TP <- list(
+  "Zm" = 0.03,
+  "Zs" = 0.03
+)
+
+plots_TP2020 <- generate_multiple_plots(reeks_2020, "TP", "<2020", watertype_thresholds = grenswaarden_TP, y_label = "Totale fosfor (mg P/l)")
+walk2(plots_TP2020, names(plots_TP2020),
+      ~ggsave(filename = paste0("./exports/TP2020/", .y, "_", "TP2020", ".png"), plot = .x, width = 10, height = 6))
+
+
+# ZS105 en ZS550
+plots_ZS105_550_2020 <- generate_multiple_plots_2(reeks_2020, "ZS_105", "ZS_550", "<2020", y_label = "Zwevende stof (mg/l)")
+walk2(plots_ZS105_550_2020, names(plots_ZS105_550_2020),
+      ~ggsave(filename = paste0("./exports/ZS105_550_2020/", .y, "_", "ZS105_550_2020", ".png"), plot = .x, width = 10, height = 6))
+
+# Anorganische stikstof 
+grenswaarden_N_anorg <- list(
+  "Zm" = 0.14,
+  "Zs" = 0.14
+)
+
+plots_N_anorg2020 <- generate_multiple_plots(reeks_2020, "N_anorg", "<2020", watertype_thresholds = grenswaarden_N_anorg, y_label = "Anorganische stikstof (mg N/l)")
+walk2(plots_N_anorg2020, names(plots_N_anorg2020),
+      ~ggsave(filename = paste0("./exports/N_anorg2020/", .y, "_", "N_anorg2020", ".png"), plot = .x, width = 10, height = 6))
+
+# Anorganische stikstof en componenten met geom_area()
 plot_stikstoffen20 <- generate_multiple_plots_multi(reeks_2020, c("NH4_N", "NO3_N", "NO2_N", "N_anorg"), "<2020", "mg N/l")
 walk2(plot_stikstoffen20, names(plot_stikstoffen20),
       ~ggsave(filename = paste0("./exports/N_anorg_componenten2020/", .y, "_", "N_anorg_componenten2020", ".png"), plot = .x, width = 10, height = 6))
+
+
+# Organische stikstof (Tn en Anorganische stikstof)
+plots_N_org2020 <- generate_multiple_plots_multi(reeks_2020, c("TN", "N_anorg"), "<2020", y_label = "mg N/l")
+walk2(plots_N_org2020, names(plots_N_org2020),
+      ~ggsave(filename = paste0("./exports/N_org2020/", .y, "_", "N_org2020", ".png"), plot = .x, width = 10, height = 6))
+
+# pH en absorptie
+plots_pH_abs2020 <- generate_multiple_plots_2Yaxes(reeks_2020, "pH_veld", "absorptie_440", "<2020", y_label1 = "Zuurtegraad - pH", y_label2 = "Absorptie 440nm (ABS)")
+walk2(plots_pH_abs2020, names(plots_pH_abs2020),
+      ~ggsave(filename = paste0("./exports/pH_abs2020/", .y, "_", "pH_abs2020", ".png"), plot = .x, width = 10, height = 6))
+
 
 ```
 
@@ -1445,6 +1539,100 @@ grenswaarden_pH <- list(
 plots_pH <- generate_multiple_plots_minmax(reeks_2022_2024, "pH_veld", "2022-2024", grenswaarden_pH)
 walk2(plots_pH, names(plots_pH),
       ~ggsave(filename = paste0("./exports/pH/", .y, "_", "pH", ".png"), plot = .x, width = 10, height = 6))
+
+# waterdiepte en secchi-diepte
+grenswaarden_SD <- list(
+  "Aw-om" = 1.8, 
+  "Cb" = 0.9, 
+  "Czb" = 0.9, 
+  "Zm" = 0.9, 
+  "Zs" = 0.9
+)
+
+plots_SD_WD <- generate_multiple_plots_2(reeks_2022_2024, "SD_veld", "WD_veld", "2022-2024", "Meetwaarde (m)")
+walk2(plots_SD_WD, names(plots_SD_WD),
+      ~ggsave(filename = paste0("./exports/SD_WD/", .y, "_", "SD_WD", ".png"), plot = .x, width = 10, height = 6))
+
+
+# SO4 - Sulfaat
+grenswaarden_SO4 <- list(
+  "Aw-om" = 100, 
+  "Cb" = 50, 
+  "Czb" = 40, 
+  "Zm" = 15, 
+  "Zs" = 15
+)
+
+plots_SO4 <- generate_multiple_plots(reeks_2022_2024, "SO4", "2022-2024", watertype_thresholds = grenswaarden_SO4, y_label = "Sulfaat (mg/l)")
+walk2(plots_SO4, names(plots_SO4),
+      ~ggsave(filename = paste0("./exports/SO4/", .y, "_", "SO4", ".png"), plot = .x, width = 10, height = 6))
+
+# Temperatuur
+grenswaarden_T <- list(
+  "Zm" = 25, 
+  "Zs" = 25
+)
+
+plots_T <- generate_multiple_plots(reeks_2022_2024, "T_veld", "2022-2024", watertype_thresholds = grenswaarden_T, y_label = "Temperatuur (°C)")
+walk2(plots_T, names(plots_T),
+      ~ggsave(filename = paste0("./exports/Temperatuur/", .y, "_", "Temp", ".png"), plot = .x, width = 10, height = 6))
+
+# PO4_P
+plots_PO4_P <- generate_multiple_plots(reeks_2022_2024, "PO4_P", "2022-2024", y_label = "Orthofosfaat PO4_P (mg P/l)")
+walk2(plots_PO4_P, names(plots_PO4_P),
+      ~ggsave(filename = paste0("./exports/PO4_P_Orthofosfaat/", .y, "_", "PO4_P", ".png"), plot = .x, width = 10, height = 6))
+
+# Totale stikstof - TN
+grenswaarden_TN <- list(
+  "Zm" = 1.3,
+  "Zs" = 1.3
+)
+
+plots_TN <- generate_multiple_plots(reeks_2022_2024, "TN", "2022-2024", watertype_thresholds = grenswaarden_TN, y_label = "Totale stikstof (mg N/l)")
+walk2(plots_TN, names(plots_TN),
+      ~ggsave(filename = paste0("./exports/TN/", .y, "_", "TN", ".png"), plot = .x, width = 10, height = 6))
+
+
+# Totale fosfor - TP
+grenswaarden_TP <- list(
+  "Zm" = 0.03,
+  "Zs" = 0.03
+)
+
+plots_TP <- generate_multiple_plots(reeks_2022_2024, "TP", "2022-2024", watertype_thresholds = grenswaarden_TP, y_label = "Totale fosfor (mg P/l)")
+walk2(plots_TP, names(plots_TP),
+      ~ggsave(filename = paste0("./exports/TP/", .y, "_", "TP", ".png"), plot = .x, width = 10, height = 6))
+
+# ZS105 en ZS550
+plots_ZS105_550 <- generate_multiple_plots_2(reeks_2022_2024, "ZS_105", "ZS_550", "2022-2024", y_label = "Zwevende stof (mg/l)")
+walk2(plots_ZS105_550, names(plots_ZS105_550),
+      ~ggsave(filename = paste0("./exports/ZS105_550/", .y, "_", "ZS105_550", ".png"), plot = .x, width = 10, height = 6))
+
+# Anorganische stikstof 
+grenswaarden_N_anorg <- list(
+  "Zm" = 0.14,
+  "Zs" = 0.14
+)
+
+plots_N_anorg <- generate_multiple_plots(reeks_2022_2024, "N_anorg", "2022-2024", watertype_thresholds = grenswaarden_N_anorg, y_label = "Anorganische stikstof (mg N/l)")
+walk2(plots_N_anorg, names(plots_N_anorg),
+      ~ggsave(filename = paste0("./exports/N_anorg/", .y, "_", "N_anorg", ".png"), plot = .x, width = 10, height = 6))
+
+# Anorganische stikstof en componenten met geom_area()
+plot_stikstoffen <- generate_multiple_plots_multi(reeks_2022_2024, c("NH4_N", "NO3_N", "NO2_N", "N_anorg"), "2022-2024", "mg N/l")
+walk2(plot_stikstoffen, names(plot_stikstoffen),
+      ~ggsave(filename = paste0("./exports/N_anorg_componenten/", .y, "_", "N_anorg_componenten", ".png"), plot = .x, width = 10, height = 6))
+
+# Organische stikstof (Tn en Anorganische stikstof)
+plots_N_org <- generate_multiple_plots_multi(reeks_2022_2024, c("TN", "N_anorg"), "2022-2024", y_label = "mg N/l")
+walk2(plots_N_org, names(plots_N_org),
+      ~ggsave(filename = paste0("./exports/N_org/", .y, "_", "N_org", ".png"), plot = .x, width = 10, height = 6))
+
+# pH en absorptie
+plots_pH_abs <- generate_multiple_plots_2Yaxes(reeks_2022_2024, "pH_veld", "absorptie_440", "2022-2024", y_label1 = "Zuurtegraad - pH", y_label2 = "Absorptie 440nm (ABS)")
+walk2(plots_pH_abs, names(plots_pH_abs),
+      ~ggsave(filename = paste0("./exports/pH_abs/", .y, "_", "pH_abs", ".png"), plot = .x, width = 10, height = 6))
+
 ```
 
 
