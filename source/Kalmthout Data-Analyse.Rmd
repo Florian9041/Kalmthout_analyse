@@ -2016,6 +2016,18 @@ walk2(plots_N_org, names(plots_N_org),
 
 
 # EXPORTS VOOR TOETSING MKN (2022-2024)
+## HabtypeVel
+```{r}
+Habtype_data <- data_KAL %>% 
+  filter(meetreeks == "2022-2024" & HabtypeVel != "NA") %>% 
+  group_by(codeplas, HabtypeVel) %>%
+  select(HabtypeVel, codeplas) %>% unique()
+
+write.csv2(Habtype_data,
+           "Habtypes.csv")
+```
+
+
 ## gemiddeldes
 ```{r}
 avg_data <- data_KAL %>%
@@ -2028,7 +2040,7 @@ wide_data <- avg_data %>%
   pivot_wider(names_from = AquaComponent, values_from = gemiddelde)
 
 # Export to CSV
-write.csv(wide_data, "./exports/csv's/gemiddeldes.csv", row.names = FALSE)
+write.csv2(wide_data, "./exports/csv's/gemiddeldes.csv", row.names = FALSE)
 ```
 
 ## zomerhalfjaargemiddelde
@@ -2043,7 +2055,7 @@ wide_data_zhj <- zhjgem_data %>%
   pivot_wider(names_from = AquaComponent, values_from = zhjgemiddelde)
 
 # Export to CSV
-write.csv(wide_data_zhj, "./exports/csv's/zomerhalfjaargemiddeldes.csv", row.names = FALSE)
+write.csv2(wide_data_zhj, "./exports/csv's/zomerhalfjaargemiddeldes.csv", row.names = FALSE)
 ```
 
 ## 90-percentiel
@@ -2058,7 +2070,7 @@ wide_data_p90 <- p90_data %>%
   pivot_wider(names_from = AquaComponent, values_from = p90)
 
 # Export to CSV
-write.csv(wide_data_p90, "./exports/csv's/90-percentielen.csv", row.names = FALSE)
+write.csv2(wide_data_p90, "./exports/csv's/90-percentielen.csv", row.names = FALSE)
 ```
 
 ## 10-percentiel
@@ -2073,7 +2085,7 @@ wide_data_p10 <- p10_data %>%
   pivot_wider(names_from = AquaComponent, values_from = p10)
 
 # Export to CSV
-write.csv(wide_data_p10, "./exports/csv's/10-percentielen.csv", row.names = FALSE)
+write.csv2(wide_data_p10, "./exports/csv's/10-percentielen.csv", row.names = FALSE)
 ```
 
 ## minimum
@@ -2088,7 +2100,7 @@ wide_data_min <- min_data %>%
   pivot_wider(names_from = AquaComponent, values_from = min)
 
 # Export to CSV
-write.csv(wide_data_min, "./exports/csv's/minimum.csv", row.names = FALSE)
+write.csv2(wide_data_min, "./exports/csv's/minimum.csv", row.names = FALSE)
 ```
 
 ## maximum
@@ -2103,7 +2115,7 @@ wide_data_max <- max_data %>%
   pivot_wider(names_from = AquaComponent, values_from = max)
 
 # Export to CSV
-write.csv(wide_data_max, "./exports/csv's/maximum.csv", row.names = FALSE)
+write.csv2(wide_data_max, "./exports/csv's/maximum.csv", row.names = FALSE)
 ```
 
 ## maximum (zomer)
@@ -2118,7 +2130,7 @@ wide_data_maxzomer <- max_data_zomer %>%
   pivot_wider(names_from = AquaComponent, values_from = max_zomer)
 
 # Export to CSV
-write.csv(wide_data_maxzomer, "./exports/csv's/maximum_zomer.csv", row.names = FALSE)
+write.csv2(wide_data_maxzomer, "./exports/csv's/maximum_zomer.csv", row.names = FALSE)
 ```
 
 # MAUCHA
