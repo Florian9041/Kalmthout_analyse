@@ -1639,6 +1639,46 @@ plots_pH_abs <- generate_multiple_plots_2Yaxes(reeks_2022_2024, "pH_veld", "abso
 walk2(plots_pH_abs, names(plots_pH_abs),
       ~ggsave(filename = paste0("./exports/pH_abs/", .y, "_", "pH_abs", ".png"), plot = .x, width = 10, height = 6))
 
+# Natrium - Na
+plots_Na <- generate_multiple_plots(reeks_2022_2024, "Na", "2022-2024", y_label = "Natrium (mg/l)")
+walk2(plots_Na, names(plots_Na),
+      ~ggsave(filename = paste0("./exports/Natrium/", .y, "_", "Na", ".png"), plot = .x, width = 10, height = 6))
+
+# Kalium - K
+plots_K <- generate_multiple_plots(reeks_2022_2024, "K", "2022-2024", y_label = "Kalium (mg/l)")
+walk2(plots_K, names(plots_K),
+      ~ggsave(filename = paste0("./exports/Kalium/", .y, "_", "K", ".png"), plot = .x, width = 10, height = 6))
+
+# Magnesium - Mg
+plots_Mg <- generate_multiple_plots(reeks_2022_2024, "Mg", "2022-2024", y_label = "Magnesium (mg/l)")
+walk2(plots_Mg, names(plots_Mg),
+      ~ggsave(filename = paste0("./exports/Magnesium/", .y, "_", "Mg", ".png"), plot = .x, width = 10, height = 6))
+
+# Ijzer - Fe
+plots_Fe <- generate_multiple_plots(reeks_2022_2024, "Fe", "2022-2024", y_label = "Ijzer (mg/l)")
+walk2(plots_Fe, names(plots_Fe),
+      ~ggsave(filename = paste0("./exports/Ijzer/", .y, "_", "Fe", ".png"), plot = .x, width = 10, height = 6))
+
+# Aluminium - Al
+plots_Al <- generate_multiple_plots(reeks_2022_2024, "Al", "2022-2024", y_label = "Aluminium (mg/l)")
+walk2(plots_Al, names(plots_Al),
+      ~ggsave(filename = paste0("./exports/Aluminium/", .y, "_", "Al", ".png"), plot = .x, width = 10, height = 6))
+
+# Calcium - Ca
+plots_Ca <- generate_multiple_plots(reeks_2022_2024, "Ca", "2022-2024", y_label = "Calcium (mg/l)")
+walk2(plots_Ca, names(plots_Ca),
+      ~ggsave(filename = paste0("./exports/Calcium/", .y, "_", "Ca", ".png"), plot = .x, width = 10, height = 6))
+
+# Silicium - Si
+plots_Si <- generate_multiple_plots(reeks_2022_2024, "Si", "2022-2024", y_label = "Silicium (mg/l)")
+walk2(plots_Si, names(plots_Si),
+      ~ggsave(filename = paste0("./exports/Silicium/", .y, "_", "Si", ".png"), plot = .x, width = 10, height = 6))
+
+# Organische koolstof - NPOC
+plots_NPOC <- generate_multiple_plots(reeks_2022_2024, "NPOC", "2022-2024", y_label = "Organische koolstof - NPOC (mg/l)")
+walk2(plots_NPOC, names(plots_NPOC),
+      ~ggsave(filename = paste0("./exports/NPOC/", .y, "_", "NPOC", ".png"), plot = .x, width = 10, height = 6))
+
 ```
 
 
