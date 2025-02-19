@@ -44,6 +44,7 @@ data_KAL$FieldSamplingDate <- as.Date(data_KAL$FieldSamplingDate, format = "%d/%
 # filter locaties van Kalmthout
 data_KAL <- data_KAL %>% filter(!is.na(CODE)) %>% 
   filter(codeplas %in% locaties_Kalmthout | CODE %in% data_naamgeving$CODE)
+
 # vervang ANTKAL0386 in codeplas door ANTKAL0386a of b (afh van CODE)
 data_KAL$codeplas[data_KAL$codeplas == "ANTKAL0386"] <- data_KAL$CODE[data_KAL$codeplas == "ANTKAL0386"]
 
@@ -2380,7 +2381,7 @@ ref_punten <- data.frame(
 # voor meetreeks 2022-24 (40 locaties)
 IREGVdata24 <- data_KAL %>% 
   filter(AquaComponent %in% c("Ca", "Cl", "EGV25_veld") & meetreeks %in% "2022-2024") %>%
-  group_by(codeplas, AquaComponent, meetreeks) %>% summarise(gemiddelde = mean(ResultCalc))
+  group_by(codeplas, AquaComponent, meetreeks, watertype) %>% summarise(gemiddelde = mean(ResultCalc))
 
 ## naar wide format (componenten als kolommen)
 IREGVwide24 <- pivot_wider(IREGVdata24, names_from = AquaComponent, values_from = gemiddelde)
